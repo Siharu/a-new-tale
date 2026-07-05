@@ -1645,7 +1645,7 @@ export class HomeScreen {
     const base = el('div', {
       position: 'absolute',
       inset: '0',
-      backgroundImage: `url(${this.bgPath('orig.png')})`,
+      backgroundImage: `url('/assets/wncorelastbastion.png')`,
       backgroundSize: 'cover',
       backgroundPosition: 'center bottom',
       filter: `${skyFilter} brightness(0.68)`,
