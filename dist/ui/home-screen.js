@@ -1518,17 +1518,17 @@ export class HomeScreen {
         const base = el('div', {
             position: 'absolute',
             inset: '0',
-            backgroundImage: `url('/assets/wncorelastbastion.png')`,
+            backgroundImage: "url('/assets/wncorelastbastion.png')",
             backgroundSize: 'cover',
             backgroundPosition: 'center bottom',
-            filter: `${skyFilter} brightness(0.68)`,
+            filter: 'brightness(0.92)',
         });
         bg.appendChild(base);
         // Parallax layers (screen composited)
         const blendModes = ['screen', 'screen', 'overlay', 'multiply'];
         const layerOpacities = [0.12, 0.1, 0.08, 0.06];
         const folder = this.backgroundFolder;
-        const layerCount = folder === 'background 1' ? 3 : 4;
+        const layerCount = 0;
         for (let i = 0; i < layerCount; i++) {
             const img = el('img', {
                 position: 'absolute',
