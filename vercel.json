@@ -1,12 +1,5 @@
 {
   "version": 2,
-{
-  "version": 2,
-  "routes": [
-    { "src": "/", "dest": "/menu.html" },
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
-}
   "routes": [
     { "src": "/", "dest": "/menu.html" },
     { "src": "/(.*)", "dest": "/$1" }
