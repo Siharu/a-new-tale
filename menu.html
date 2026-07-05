@@ -4,834 +4,125 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Drifter's Tale</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=VT323&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
   </script>
   <style>
-    /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: #060a12; overflow: hidden; }
 
-    :root {
-      --red:      #c0392b;
-      --off:      #d8dce2;
-      --dim:      #7a8590;
-      --dimmer:   #3a4550;
-      --panel-w:  360px;
-      --pad:      48px;
-    }
-
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: #000;
-      font-family: 'Share Tech Mono', monospace;
-      color: var(--off);
-    }
-
-    /* ── Layers (back to front) ── */
-
-    /* 0 — background image */
-    #bg {
-      position: fixed; inset: 0; z-index: 0;
-      background-image: url('./assets/wncorelastbastion.png');
-      background-size: cover;
-      background-position: center;
-      filter: brightness(0.68) contrast(1.08) saturate(0.85);
-    }
-
-    /* 1 — rain */
-    #rain { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
-
-    /* 2 — vignette */
-    #vignette {
-      position: fixed; inset: 0; z-index: 2; pointer-events: none;
-      background: radial-gradient(ellipse at 60% 50%, transparent 38%, rgba(0,0,0,0.72) 100%);
-    }
-
-    /* 3 — left panel fog */
-    #fog {
-      position: fixed; top: 0; left: 0; bottom: 0; width: 520px; z-index: 3; pointer-events: none;
-      background: linear-gradient(to right, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.6) 55%, transparent 100%);
-    }
-
-    /* 4 — scanlines */
-    #scan {
-      position: fixed; inset: 0; z-index: 4; pointer-events: none;
-      background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px);
-    }
-
-    /* 5 — noise */
-    #noise { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.022; image-rendering: pixelated; width: 100%; height: 100%; }
-
-    /* 6 — lightning */
-    #lightning { position: fixed; inset: 0; z-index: 6; pointer-events: none; background: rgba(200,220,255,0); transition: background 0.04s; }
-
-    /* 7 — panel UI */
-    #panel {
-      position: fixed; top: 0; left: 0; bottom: 0; width: var(--panel-w); z-index: 10;
-      display: flex; flex-direction: column;
-      padding: var(--pad) 40px var(--pad) var(--pad);
-      gap: 0;
-    }
-
-    /* 8 — game app container (hidden until launched) */
     #app {
-      position: fixed; inset: 0; z-index: 20; display: none;
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
     }
 
-    /* 9 — dialog */
-    #dialog {
-      position: fixed; inset: 0; z-index: 30;
-      display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.78); padding: 24px;
+    /* Boot screen — shown until HomeScreen is ready */
+    #boot {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #060a12;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      transition: opacity 0.8s ease;
     }
-    #dialog.open { display: flex; }
-    .dlg-card {
-      width: min(600px, 100%);
-      background: rgba(8,14,22,0.97);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 4px;
-      padding: 32px 32px 24px;
-    }
-    .dlg-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .dlg-title {
-      font-family: 'Rajdhani', sans-serif; font-size: 1.6rem;
+    #boot.hidden { opacity: 0; pointer-events: none; }
+
+    .boot-logo {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
       font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; color: #fff;
+      text-transform: uppercase; color: rgba(200,215,235,0.9);
     }
-    .dlg-body { font-size: 0.88rem; line-height: 1.7; color: var(--dim); }
-    .dlg-close {
-      background: transparent; border: 1px solid rgba(255,255,255,0.1);
-      color: var(--off); width: 36px; height: 36px; border-radius: 2px;
-      font-size: 1.2rem; cursor: pointer; flex-shrink: 0;
-      transition: background 0.1s;
+    .boot-sub {
+      font-family: 'Courier New', monospace;
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: rgba(100,130,160,0.6);
     }
-    .dlg-close:hover { background: rgba(255,255,255,0.07); }
-
-    /* 10 — horror flash */
-    #wrongline {
-      position: fixed; bottom: 20px; right: 24px; z-index: 40;
-      font-family: 'VT323', monospace; font-size: 0.6rem;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      color: rgba(192,57,43,0); pointer-events: none;
-      transition: color 0.07s;
+    .boot-bar {
+      width: 180px; height: 1px;
+      background: rgba(255,255,255,0.06);
+      position: relative; overflow: hidden;
     }
-    #wrongline.on { color: rgba(192,57,43,0.7); }
-
-    /* ── Panel contents ── */
-
-    .eyebrow {
-      font-family: 'VT323', monospace; font-size: 0.62rem;
-      letter-spacing: 0.3em; color: var(--dimmer);
-      text-transform: uppercase; margin-bottom: 16px;
+    .boot-bar::after {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: rgba(140,190,220,0.5);
+      animation: scan 1.4s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%   { left: -100%; }
+      100% { left: 100%; }
     }
 
-    .title-wrap { margin-bottom: 36px; }
-    .title-main {
-      font-family: 'Rubik Glitch', sans-serif;
-      font-size: clamp(2.6rem, 5vw, 3.8rem);
-      font-weight: 400; line-height: 0.92;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: #eef2ff;
-      text-shadow: 0 0 40px rgba(255,255,255,0.06);
+    /* Error state */
+    #error {
+      position: fixed; inset: 0; z-index: 9998;
+      background: #060a12; display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+      font-family: 'Courier New', monospace;
     }
-    .title-sub {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.72rem; font-weight: 400;
-      letter-spacing: 0.52em; text-transform: uppercase;
-      color: rgba(216,220,226,0.6); margin-top: 6px;
+    #error.show { display: flex; }
+    .err-title { font-size: 1rem; letter-spacing: 0.2em; color: rgba(192,57,43,0.9); text-transform: uppercase; }
+    .err-msg   { font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); max-width: 420px; text-align: center; line-height: 1.7; }
+    .err-retry {
+      margin-top: 8px; padding: 9px 22px;
+      border: 1px solid rgba(192,57,43,0.4); background: transparent;
+      color: rgba(192,57,43,0.8); font-family: 'Courier New', monospace;
+      font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.15s;
     }
-
-    /* stats */
-    .stats { display: flex; flex-direction: column; gap: 4px; margin-bottom: 36px; }
-    .stat {
-      display: grid; grid-template-columns: 118px 1fr;
-      font-family: 'VT323', monospace; font-size: 0.78rem;
-      letter-spacing: 0.1em; text-transform: uppercase;
-    }
-    .stat-l { color: var(--dimmer); }
-    .stat-v { color: var(--off); }
-    .sig-wrap { display: flex; align-items: center; gap: 8px; }
-    .sig-bars { display: flex; gap: 3px; align-items: flex-end; }
-    .sig-bars span {
-      display: block; width: 3px;
-      background: var(--dim); opacity: 0.3; border-radius: 1px;
-      transition: opacity 0.3s, background 0.3s;
-    }
-    .sig-bars span:nth-child(1) { height: 5px; }
-    .sig-bars span:nth-child(2) { height: 8px; }
-    .sig-bars span:nth-child(3) { height: 12px; }
-    .sig-bars span:nth-child(4) { height: 16px; }
-    .sig-bars span:nth-child(5) { height: 20px; }
-    .sig-bars span.lit { background: var(--off); opacity: 1; }
-    .sig-pct { font-family: 'VT323', monospace; font-size: 0.78rem; color: var(--off); min-width: 28px; }
-
-    /* nav */
-    .nav-label {
-      font-family: 'VT323', monospace; font-size: 0.6rem;
-      letter-spacing: 0.26em; color: var(--dimmer);
-      text-transform: uppercase; margin-bottom: 8px;
-    }
-    nav { display: flex; flex-direction: column; gap: 1px; flex: 1; }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 0; background: transparent; border: none;
-      cursor: pointer; text-align: left; outline: none;
-      transition: opacity 0.1s;
-    }
-    .nav-item:focus-visible { outline: 1px solid rgba(255,255,255,0.2); outline-offset: 2px; }
-    .nav-item.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
-    .nav-marker {
-      width: 8px; height: 8px; border: 1px solid var(--dimmer);
-      flex-shrink: 0; transition: background 0.1s, border-color 0.1s;
-    }
-    .nav-text {
-      font-family: 'Rajdhani', sans-serif; font-size: 1.08rem;
-      font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--dim); transition: color 0.1s, letter-spacing 0.1s;
-    }
-    .nav-item:hover .nav-text,
-    .nav-item.active .nav-text { color: #fff; letter-spacing: 0.26em; }
-    .nav-item:hover .nav-marker,
-    .nav-item.active .nav-marker { background: var(--off); border-color: var(--off); }
-
-    /* bottom */
-    .bottom { margin-top: auto; padding-top: 24px; }
-    .tagline {
-      font-family: 'VT323', monospace; font-size: 0.6rem;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--dimmer); line-height: 1.7;
-    }
-    .morse {
-      font-family: 'VT323', monospace; font-size: 0.58rem;
-      letter-spacing: 0.2em; color: var(--dimmer);
-      opacity: 0.45; margin-top: 6px;
-      transition: opacity 0.2s;
-    }
-
-    /* ── Animations ── */
-    @keyframes breath { 0%,100%{opacity:1} 50%{opacity:0.94} }
-    body { animation: breath 10s ease-in-out infinite; }
-
-    /* glitch flicker on title on lightning */
-    .title-main.glitch {
-      animation: tglitch 0.3s steps(2,end) 1;
-    }
-    @keyframes tglitch {
-      0%,100%{text-shadow:0 0 30px rgba(255,255,255,0.1)}
-      25%{text-shadow:-2px 0 rgba(255,60,60,0.5),2px 0 rgba(120,200,255,0.4);transform:translate(-1px,1px)}
-      75%{text-shadow:2px 0 rgba(255,60,60,0.4),-2px 0 rgba(120,200,255,0.4);transform:translate(1px,-1px)}
-    }
-
-    /* ── Loading state ── */
-    #boot-overlay {
-      position: fixed; inset: 0; z-index: 50;
-      background: #000; display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 16px;
-      transition: opacity 0.6s;
-    }
-    #boot-overlay.fade { opacity: 0; pointer-events: none; }
-    .boot-line {
-      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
-      letter-spacing: 0.2em; color: rgba(255,255,255,0.35);
-      text-transform: uppercase;
-    }
-    .boot-line.hi { color: rgba(255,255,255,0.8); }
-
-    /* ── Toast ── */
-    #toast {
-      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-      z-index: 60; padding: 10px 22px;
-      background: rgba(4,8,16,0.94); border: 1px solid rgba(255,255,255,0.08);
-      font-family: 'Share Tech Mono', monospace; font-size: 0.62rem;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: rgba(140,210,180,0.85);
-      opacity: 0; pointer-events: none; transition: opacity 0.2s;
-    }
-    #toast.on { opacity: 1; }
-
-    /* ── Responsive ── */
-    @media (max-width: 640px) {
-      :root { --panel-w: 100%; --pad: 28px; }
-      #panel { width: 100%; justify-content: flex-start; gap: 20px; overflow-y: auto; }
-      #fog { width: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 70%, transparent 100%); }
-      .title-main { font-size: clamp(2rem, 9vw, 2.8rem); }
-    }
+    .err-retry:hover { background: rgba(192,57,43,0.1); }
   </style>
 </head>
 <body>
 
-<!-- Boot overlay — hides until fonts/bg ready -->
-<div id="boot-overlay">
-  <div class="boot-line hi">WNCORE · RELAY NETWORK</div>
-  <div class="boot-line">ESTABLISHING UPLINK…</div>
-</div>
+  <!-- HomeScreen renders itself here -->
+  <div id="app"></div>
 
-<!-- Layers -->
-<div id="bg"></div>
-<canvas id="rain"></canvas>
-<div id="vignette"></div>
-<div id="fog"></div>
-<div id="scan"></div>
-<canvas id="noise" width="200" height="200"></canvas>
-<div id="lightning"></div>
-
-<!-- Game container -->
-<div id="app"></div>
-
-<!-- Dialog -->
-<div id="dialog" role="dialog" aria-modal="true">
-  <div class="dlg-card">
-    <div class="dlg-head">
-      <div class="dlg-title" id="dlg-title">—</div>
-      <button class="dlg-close" id="dlg-close" aria-label="Close">×</button>
-    </div>
-    <div class="dlg-body" id="dlg-body"></div>
-  </div>
-</div>
-
-<!-- Toast -->
-<div id="toast"></div>
-
-<!-- Horror flash -->
-<div id="wrongline"></div>
-
-<!-- Main panel -->
-<div id="panel">
-  <div class="eyebrow" id="eyebrow">WNCORE · RELAY STATION 7</div>
-
-  <div class="title-wrap">
-    <div class="title-main" id="title-main">Drifter's<br>Tale</div>
-    <div class="title-sub">Another Sky · 2032</div>
+  <!-- Boot splash (gone once engine loads) -->
+  <div id="boot">
+    <div class="boot-logo">Drifter's Tale</div>
+    <div class="boot-bar"></div>
+    <div class="boot-sub" id="boot-status">WNCORE · ESTABLISHING UPLINK</div>
   </div>
 
-  <div class="stats">
-    <div class="stat">
-      <span class="stat-l">Signal</span>
-      <span class="stat-v">
-        <span class="sig-wrap">
-          <span class="sig-bars" id="sig-bars">
-            <span></span><span></span><span></span><span></span><span></span>
-          </span>
-          <span class="sig-pct" id="sig-pct">—%</span>
-        </span>
-      </span>
-    </div>
-    <div class="stat">
-      <span class="stat-l">Station</span>
-      <span class="stat-v" id="stat-station">R-23</span>
-    </div>
-    <div class="stat">
-      <span class="stat-l">Date</span>
-      <span class="stat-v" id="stat-date">——.——.2032</span>
-    </div>
-    <div class="stat">
-      <span class="stat-l">Time</span>
-      <span class="stat-v" id="stat-time">——:——</span>
-    </div>
+  <!-- Error state (shown if engine fails entirely) -->
+  <div id="error">
+    <div class="err-title">Signal Lost</div>
+    <div class="err-msg" id="err-msg">Engine failed to initialise. Check console for details.</div>
+    <button class="err-retry" onclick="location.reload()">Retry Connection</button>
   </div>
 
-  <div class="nav-label">Select Access Node</div>
-  <nav id="main-nav">
-    <button class="nav-item active" data-action="new-game">
-      <span class="nav-marker"></span>
-      <span class="nav-text">New Game</span>
-    </button>
-    <button class="nav-item" data-action="continue">
-      <span class="nav-marker"></span>
-      <span class="nav-text">Continue</span>
-    </button>
-    <button class="nav-item" data-action="expedition">
-      <span class="nav-marker"></span>
-      <span class="nav-text">Expedition</span>
-    </button>
-    <button class="nav-item" data-action="archives">
-      <span class="nav-marker"></span>
-      <span class="nav-text">Archives</span>
-    </button>
-    <button class="nav-item" data-action="settings">
-      <span class="nav-marker"></span>
-      <span class="nav-text">Settings</span>
-    </button>
-    <button class="nav-item" data-action="credits">
-      <span class="nav-marker"></span>
-      <span class="nav-text">Credits</span>
-    </button>
-  </nav>
+  <script type="module">
+    // Block auto-init — we construct manually below
+    window.__DRIFTER_NO_AUTO_INIT__ = true;
 
-  <div class="bottom">
-    <div class="tagline">The signal is weak,<br>but it's still calling.</div>
-    <div class="morse" id="morse">— — · — — —</div>
-  </div>
-</div>
+    const boot       = document.getElementById('boot');
+    const bootStatus = document.getElementById('boot-status');
+    const errorEl    = document.getElementById('error');
+    const errMsg     = document.getElementById('err-msg');
 
-<script type="module">
-// ═══════════════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════════════
-let gameApp = null;       // HomeScreen instance once loaded
-let gameReady = false;    // true after HomeScreen constructed OK
-let audioCtx = null;
-let masterGain = null;
-let rainStarted = false;
-
-// ═══════════════════════════════════════════════════════════════════
-// BOOT — load HomeScreen module, fade boot overlay
-// ═══════════════════════════════════════════════════════════════════
-const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-
-import('./dist/ui/home-screen.js')
-  .then(mod => {
-    const HomeScreen = mod.HomeScreen;
-    if (!HomeScreen) throw new Error('HomeScreen not exported');
-    gameApp = new HomeScreen('app');
-    gameReady = true;
-  })
-  .catch(err => {
-    // Game engine failed — menu still works standalone
-    console.warn('[DRIFTER] HomeScreen load failed:', err);
-  })
-  .finally(() => {
-    // Fade boot overlay regardless of engine result
-    const boot = document.getElementById('boot-overlay');
-    boot.classList.add('fade');
-    setTimeout(() => boot.remove(), 700);
-  });
-
-// ═══════════════════════════════════════════════════════════════════
-// AUDIO HELPERS
-// ═══════════════════════════════════════════════════════════════════
-function getAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.7;
-    masterGain.connect(audioCtx.destination);
-  }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
-}
-
-function playTone() {
-  try {
-    const ctx = getAudio();
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(820, now);
-    osc.frequency.exponentialRampToValueAtTime(660, now + 0.09);
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.03, now + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
-    osc.connect(g); g.connect(masterGain);
-    osc.start(now); osc.stop(now + 0.14);
-  } catch(e) {}
-}
-
-function startAmbient() {
-  if (rainStarted) return;
-  rainStarted = true;
-  try {
-    const ctx = getAudio();
-    // Rain noise
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.loop = true;
-    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 3500;
-    const rg = ctx.createGain(); rg.gain.value = 0.035;
-    src.connect(hp); hp.connect(lp); lp.connect(rg); rg.connect(masterGain);
-    src.start();
-    // Low drone
-    const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 46;
-    const og = ctx.createGain(); og.gain.value = 0.012;
-    o1.connect(og); og.connect(masterGain); o1.start();
-  } catch(e) {}
-}
-
-function playThunder() {
-  try {
-    const ctx = getAudio();
-    const len = ctx.sampleRate * 3;
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(Math.max(0,1-i/len), 0.45);
-    const src = ctx.createBufferSource(); src.buffer = buf;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
-    const g = ctx.createGain();
-    const now = ctx.currentTime;
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.22, now + 0.05);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 3);
-    src.connect(lp); lp.connect(g); g.connect(masterGain);
-    src.start(); src.stop(now + 3);
-  } catch(e) {}
-}
-
-document.addEventListener('click',   () => startAmbient(), { once: true });
-document.addEventListener('keydown', () => startAmbient(), { once: true });
-
-// ═══════════════════════════════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════════════════════════════
-let toastTimer = null;
-function showToast(msg, dur = 3000) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('on');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('on'), dur);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// GAME LAUNCH
-// ═══════════════════════════════════════════════════════════════════
-function showApp() {
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('panel').style.display = 'none';
-}
-
-function hideApp() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('panel').style.display = 'flex';
-}
-
-async function launch(mode) {
-  if (!gameReady) {
-    if (!gameApp) {
-      showToast('ENGINE NOT AVAILABLE · STANDALONE MODE');
-      return;
+    function hideBoot() {
+      boot.classList.add('hidden');
+      setTimeout(() => boot.remove(), 900);
     }
-    // Still loading — wait up to 8s
-    showToast('WNCORE · INITIALISING ENGINE…', 8000);
-    await new Promise(resolve => {
-      const t = setInterval(() => { if (gameReady) { clearInterval(t); resolve(); }}, 100);
-      setTimeout(() => { clearInterval(t); resolve(); }, 8000);
-    });
-    if (!gameReady) { showToast('ENGINE TIMEOUT · TRY AGAIN'); return; }
-  }
-  showApp();
-  try {
-    if (mode === 'story')       await gameApp.launchStory();
-    else if (mode === 'settings') gameApp.showSettings();
-    else                          await gameApp.launchExploration();
-  } catch (err) {
-    console.error('[DRIFTER] Launch error:', err);
-    showToast('SIGNAL LOST · RETURNING TO RELAY');
-    hideApp();
-  }
-}
 
-// ═══════════════════════════════════════════════════════════════════
-// DIALOG
-// ═══════════════════════════════════════════════════════════════════
-const DIALOG_CONTENT = {
-  continue: {
-    title: 'Continue',
-    body:  'Resume your last expedition. The relay held the signal while you were gone.'
-  },
-  expedition: {
-    title: 'Expedition Run',
-    body:  'Procedural zone. Fresh Drifter drawn from the roster. Move quietly. Catalog what you find. Extract before the signal drops. No two runs the same.'
-  },
-  archives: {
-    title: 'Archives',
-    body:  () => buildArchives()
-  },
-  credits: {
-    title: 'Credits',
-    body:  "DRIFTER'S TALE — an Another Sky story.\n\nDesign, writing, and direction by Siharu.\nBuilt with TypeScript and Three.js.\n\nBroadcast maintained from WNCORE Relay Station 7.\n\nThe signal is weak, but it's still calling."
-  }
-};
-
-function buildArchives() {
-  let logs = [];
-  try { logs = JSON.parse(localStorage.getItem('drifter_home_screen') || '[]'); } catch(e) {}
-  if (!Array.isArray(logs) || !logs.length) {
-    return 'No field logs on record. Deposits left behind by Drifters who made it back — or did not — will surface here as runs accumulate.\n\nWNCORE ADVISORY: not every logbook is genuine.';
-  }
-  return logs.slice(-10).reverse().map(d => {
-    const r = d?.region || 'UNKNOWN REGION';
-    const t = d?.text   || '(illegible)';
-    return `[${r}]\n${t}`;
-  }).join('\n\n') + '\n\nWNCORE ADVISORY: not every logbook is genuine.';
-}
-
-function openDialog(key) {
-  const def = DIALOG_CONTENT[key];
-  if (!def) return;
-  const body = typeof def.body === 'function' ? def.body() : def.body;
-  document.getElementById('dlg-title').textContent = def.title;
-  // preserve newlines
-  const bodyEl = document.getElementById('dlg-body');
-  bodyEl.innerHTML = body.replace(/\n/g, '<br>');
-  document.getElementById('dialog').classList.add('open');
-  document.getElementById('dlg-close').focus();
-}
-
-function closeDialog() {
-  document.getElementById('dialog').classList.remove('open');
-}
-
-document.getElementById('dlg-close').addEventListener('click', closeDialog);
-document.getElementById('dialog').addEventListener('click', e => {
-  if (e.target === document.getElementById('dialog')) closeDialog();
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeDialog();
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// NAV CLICK HANDLER
-// ═══════════════════════════════════════════════════════════════════
-document.getElementById('main-nav').addEventListener('click', e => {
-  const btn = e.target.closest('.nav-item');
-  if (!btn || btn.classList.contains('disabled')) return;
-
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  playTone();
-
-  const action = btn.dataset.action;
-  switch(action) {
-    case 'new-game':    launch('story');       break;
-    case 'continue':    launch('exploration'); break;
-    case 'expedition':  launch('exploration'); break;
-    case 'settings':    launch('settings');    break;
-    default:            openDialog(action);    break;
-  }
-});
-
-// Keyboard nav
-document.addEventListener('keydown', e => {
-  if (document.getElementById('dialog').classList.contains('open')) return;
-  const items = [...document.querySelectorAll('.nav-item:not(.disabled)')];
-  const cur = items.findIndex(i => i.classList.contains('active'));
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    const next = items[(cur + 1) % items.length];
-    items.forEach(i => i.classList.remove('active'));
-    next.classList.add('active'); next.focus();
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    const prev = items[(cur - 1 + items.length) % items.length];
-    items.forEach(i => i.classList.remove('active'));
-    prev.classList.add('active'); prev.focus();
-  } else if ((e.key === 'Enter' || e.key === ' ') && cur >= 0) {
-    e.preventDefault(); items[cur].click();
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// CLOCK + SIGNAL
-// ═══════════════════════════════════════════════════════════════════
-(function clock() {
-  const STATIONS = [
-    'RELAY STATION 3', 'RELAY STATION 7', 'RELAY STATION 12',
-    'RELAY OUTPOST ECHO', 'RELAY OUTPOST NINER', 'RELAY STATION 19',
-  ];
-  document.getElementById('eyebrow').textContent =
-    'WNCORE · ' + STATIONS[Math.floor(Math.random() * STATIONS.length)];
-
-  // In-world date — advances each session
-  const KEY = 'drifter-menu-date-v5';
-  const start = new Date(2032, 1, 7);
-  let stored = null;
-  try { stored = new Date(sessionStorage.getItem(KEY)); } catch(e){}
-  const now = (stored && !isNaN(stored)) ? stored : new Date(start);
-  const next = new Date(now); next.setDate(next.getDate() + 1);
-  try { sessionStorage.setItem(KEY, next.toISOString()); } catch(e){}
-
-  const dd = String(now.getDate()).padStart(2,'0');
-  const mm = String(now.getMonth()+1).padStart(2,'0');
-  document.getElementById('stat-date').textContent = `${dd}.${mm}.${now.getFullYear()}`;
-
-  const h = String(Math.floor(Math.random()*24)).padStart(2,'0');
-  const m = String(Math.floor(Math.random()*60)).padStart(2,'0');
-  let timeStr = `${h}:${m}`;
-  document.getElementById('stat-time').textContent = timeStr;
-
-  // Blink colon
-  setInterval(() => {
-    timeStr = timeStr.includes(':') ? timeStr.replace(':','·') : timeStr.replace('·',':');
-    document.getElementById('stat-time').textContent = timeStr;
-  }, 950);
-
-  // Signal strength — drifts
-  let sigPct = 55 + Math.floor(Math.random() * 30);
-  let sigDir = 1;
-  const bars = document.querySelectorAll('.sig-bars span');
-  function updateSig() {
-    sigPct += sigDir * (Math.random() < 0.4 ? (Math.random() < 0.5 ? 1 : -1) : 0);
-    sigPct = Math.max(20, Math.min(89, sigPct));
-    if (sigPct >= 85) sigDir = -1;
-    if (sigPct <= 22) sigDir =  1;
-    document.getElementById('sig-pct').textContent = sigPct + '%';
-    const lit = Math.round((sigPct / 100) * 5);
-    bars.forEach((b, i) => b.classList.toggle('lit', i < lit));
-  }
-  updateSig();
-  setInterval(updateSig, 600);
-})();
-
-// ═══════════════════════════════════════════════════════════════════
-// RAIN CANVAS
-// ═══════════════════════════════════════════════════════════════════
-(function rain() {
-  const canvas = document.getElementById('rain');
-  const ctx = canvas.getContext('2d');
-  let W, H, drops = [];
-  const N = 380;
-  const ANGLE = Math.PI / 2 + 0.28;
-
-  function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    drops = Array.from({length: N}, () => ({
-      x: Math.random() * W, y: Math.random() * H,
-      len: 10 + Math.random() * 20,
-      spd: 12 + Math.random() * 16,
-      op:  0.06 + Math.random() * 0.18,
-      w:   0.4 + Math.random() * 0.7,
-    }));
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  const CX = Math.cos(ANGLE), SY = Math.sin(ANGLE);
-  let last = 0;
-  function frame(ts) {
-    const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
-    ctx.clearRect(0, 0, W, H);
-    for (const d of drops) {
-      d.x += CX * d.spd * dt * 60 * 0.09;
-      d.y += SY * d.spd * dt * 60 * 0.15;
-      if (d.y > H + 30) { d.y = -30; d.x = Math.random() * W; }
-      if (d.x > W + 10) { d.x = -10; }
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(155,175,205,${d.op})`;
-      ctx.lineWidth = d.w;
-      ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x + CX * d.len, d.y + SY * d.len);
-      ctx.stroke();
+    function showError(msg) {
+      hideBoot();
+      errMsg.textContent = msg;
+      errorEl.classList.add('show');
     }
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
 
-// ═══════════════════════════════════════════════════════════════════
-// NOISE CANVAS
-// ═══════════════════════════════════════════════════════════════════
-(function noise() {
-  const c = document.getElementById('noise');
-  const ctx = c.getContext('2d');
-  function tick() {
-    const img = ctx.createImageData(200, 200);
-    for (let i = 0; i < img.data.length; i += 4) {
-      const v = Math.random() * 255 | 0;
-      img.data[i] = img.data[i+1] = img.data[i+2] = v;
-      img.data[i+3] = 255;
+    try {
+      bootStatus.textContent = 'WNCORE · LOADING ENGINE';
+      const { HomeScreen } = await import('./dist/ui/home-screen.js');
+      bootStatus.textContent = 'WNCORE · INITIALISING';
+      const app = new HomeScreen('app');
+      window.__DRIFTER_APP = app;
+      hideBoot();
+    } catch (err) {
+      console.error('[DRIFTER] Boot failed:', err);
+      showError(`Boot error: ${err?.message ?? err}\n\nCheck the browser console for details.`);
     }
-    ctx.putImageData(img, 0, 0);
-  }
-  tick(); setInterval(tick, 120);
-})();
-
-// ═══════════════════════════════════════════════════════════════════
-// LIGHTNING
-// ═══════════════════════════════════════════════════════════════════
-(function lightning() {
-  const el = document.getElementById('lightning');
-  const title = document.getElementById('title-main');
-
-  function flash() {
-    const strokes = [{t:0,o:0.5},{t:55,o:0.08},{t:95,o:0.65},{t:170,o:0}];
-    for (const s of strokes) {
-      setTimeout(() => {
-        el.style.background = `rgba(210,225,255,${s.o})`;
-        if (s.o > 0.3) {
-          title.classList.remove('glitch');
-          void title.offsetWidth;
-          title.classList.add('glitch');
-        }
-        setTimeout(() => el.style.background = 'rgba(200,220,255,0)', 45);
-      }, s.t);
-    }
-    setTimeout(() => playThunder(), 900 + Math.random() * 1200);
-  }
-
-  function schedule() {
-    setTimeout(() => { flash(); schedule(); }, 5000 + Math.random() * 13000);
-  }
-  setTimeout(schedule, 2000 + Math.random() * 3000);
-})();
-
-// ═══════════════════════════════════════════════════════════════════
-// MORSE FLICKER
-// ═══════════════════════════════════════════════════════════════════
-(function morse() {
-  const seqs = ['— — · — — —','· · — · · ·','— — · · — ·','· · — · — ·'];
-  const el = document.getElementById('morse');
-  let i = 0;
-  setInterval(() => {
-    i = (i + 1) % seqs.length;
-    el.style.opacity = '0';
-    setTimeout(() => { el.textContent = seqs[i]; el.style.opacity = '0.45'; }, 180);
-  }, 5200);
-})();
-
-// ═══════════════════════════════════════════════════════════════════
-// HORROR LAYER
-// ═══════════════════════════════════════════════════════════════════
-(function horror() {
-  const wl = document.getElementById('wrongline');
-  const msgs = [
-    'SIGNAL ORIGIN: UNKNOWN','DRIFTER COUNT: 0',
-    'THEY ARE STILL OUT THERE','DO NOT OPEN THE LOGBOOK',
-    'YOU HAVE BEEN HERE BEFORE','THE RELAY IS NOT ALONE',
-    'STOP LOOKING','IT REMEMBERS YOUR FACE',
-  ];
-
-  function wrongFlash() {
-    wl.textContent = msgs[Math.floor(Math.random() * msgs.length)];
-    wl.classList.add('on');
-    setTimeout(() => wl.classList.remove('on'), 1200 + Math.random() * 600);
-  }
-
-  function corruptStation() {
-    const el = document.getElementById('stat-station');
-    const orig = el.textContent;
-    el.textContent = '???';
-    el.style.color = 'rgba(192,57,43,0.8)';
-    setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 500 + Math.random()*300);
-  }
-
-  function cursedNav() {
-    const items = [...document.querySelectorAll('.nav-item:not(.active)')];
-    if (!items.length) return;
-    const t = items[Math.floor(Math.random() * items.length)];
-    t.querySelector('.nav-text').style.color = 'rgba(192,57,43,0.65)';
-    setTimeout(() => { t.querySelector('.nav-text').style.color = ''; }, 400 + Math.random()*200);
-  }
-
-  const events = [wrongFlash, wrongFlash, wrongFlash, corruptStation, corruptStation, cursedNav];
-  function schedule() {
-    setTimeout(() => {
-      events[Math.floor(Math.random() * events.length)]();
-      if (Math.random() < 0.2) setTimeout(() => events[Math.floor(Math.random() * events.length)](), 400);
-      schedule();
-    }, 5000 + Math.random() * 12000);
-  }
-  setTimeout(schedule, 8000 + Math.random() * 8000);
-})();
-</script>
+  </script>
 </body>
 </html>
