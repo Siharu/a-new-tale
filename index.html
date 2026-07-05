@@ -19,31 +19,120 @@
     }
   </script>
   <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #111;
-      color: #eee;
-      font-family: system-ui, sans-serif;
-      padding: 24px;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; background: #060a12; overflow: hidden; }
+
+    #app {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
     }
 
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 0.75rem;
+    /* Boot screen — shown until HomeScreen is ready */
+    #boot {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #060a12;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      transition: opacity 0.8s ease;
+    }
+    #boot.hidden { opacity: 0; pointer-events: none; }
+
+    .boot-logo {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(200,215,235,0.9);
+    }
+    .boot-sub {
+      font-family: 'Courier New', monospace;
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: rgba(100,130,160,0.6);
+    }
+    .boot-bar {
+      width: 180px; height: 1px;
+      background: rgba(255,255,255,0.06);
+      position: relative; overflow: hidden;
+    }
+    .boot-bar::after {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: rgba(140,190,220,0.5);
+      animation: scan 1.4s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%   { left: -100%; }
+      100% { left: 100%; }
     }
 
-    p {
-      margin: 0.4rem 0;
-      line-height: 1.5;
+    /* Error state */
+    #error {
+      position: fixed; inset: 0; z-index: 9998;
+      background: #060a12; display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+      font-family: 'Courier New', monospace;
     }
-
-    a {
-      color: #7ee;
+    #error.show { display: flex; }
+    .err-title { font-size: 1rem; letter-spacing: 0.2em; color: rgba(192,57,43,0.9); text-transform: uppercase; }
+    .err-msg   { font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); max-width: 420px; text-align: center; line-height: 1.7; }
+    .err-retry {
+      margin-top: 8px; padding: 9px 22px;
+      border: 1px solid rgba(192,57,43,0.4); background: transparent;
+      color: rgba(192,57,43,0.8); font-family: 'Courier New', monospace;
+      font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.15s;
     }
+    .err-retry:hover { background: rgba(192,57,43,0.1); }
   </style>
 </head>
 <body>
-    <div id="app"></div>
-    <script type="module" src="./dist/ui/home-screen.js"></script>
-  </body>
+
+  <!-- HomeScreen renders itself here -->
+  <div id="app"></div>
+
+  <!-- Boot splash (gone once engine loads) -->
+  <div id="boot">
+    <div class="boot-logo">Drifter's Tale</div>
+    <div class="boot-bar"></div>
+    <div class="boot-sub" id="boot-status">WNCORE · ESTABLISHING UPLINK</div>
+  </div>
+
+  <!-- Error state (shown if engine fails entirely) -->
+  <div id="error">
+    <div class="err-title">Signal Lost</div>
+    <div class="err-msg" id="err-msg">Engine failed to initialise. Check console for details.</div>
+    <button class="err-retry" onclick="location.reload()">Retry Connection</button>
+  </div>
+
+  <script type="module">
+    // Block auto-init — we construct manually below
+    window.__DRIFTER_NO_AUTO_INIT__ = true;
+
+    const boot       = document.getElementById('boot');
+    const bootStatus = document.getElementById('boot-status');
+    const errorEl    = document.getElementById('error');
+    const errMsg     = document.getElementById('err-msg');
+
+    function hideBoot() {
+      boot.classList.add('hidden');
+      setTimeout(() => boot.remove(), 900);
+    }
+
+    function showError(msg) {
+      hideBoot();
+      errMsg.textContent = msg;
+      errorEl.classList.add('show');
+    }
+
+    try {
+      bootStatus.textContent = 'WNCORE · LOADING ENGINE';
+      const { HomeScreen } = await import('./dist/ui/home-screen.js');
+      bootStatus.textContent = 'WNCORE · INITIALISING';
+      const app = new HomeScreen('app');
+      window.__DRIFTER_APP = app;
+      hideBoot();
+    } catch (err) {
+      console.error('[DRIFTER] Boot failed:', err);
+      showError(`Boot error: ${err?.message ?? err}\n\nCheck the browser console for details.`);
+    }
+  </script>
+</body>
