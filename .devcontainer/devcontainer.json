@@ -1,0 +1,15 @@
+{
+  "name": "drifter",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  "postCreateCommand": "bash setup-folders.sh && bash setup-files.sh && npm install",
+  "forwardPorts": []
+}

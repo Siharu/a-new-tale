@@ -1,0 +1,31 @@
+{
+  "name": "drifter",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Procedural investigation-survival RPG engine for Another Sky universe",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:dist": "npm install && npm run build",
+    "dev": "tsc --watch",
+    "vercel-build": "npm run build",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "another-sky",
+    "investigation",
+    "survival",
+    "procedural",
+    "isometric"
+  ],
+  "author": "Siharu",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/three": "^0.160.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "three": "^0.160.0"
+  }
+}

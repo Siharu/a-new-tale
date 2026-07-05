@@ -1,1 +1,204 @@
-# a-new-tale
+# DRIFTER'S TALE
+
+> *Six months after the collapse. The sky is wrong. You are already inside it.*
+
+A procedural investigation-survival RPG set in the **Cygnus Signal Series** universe. HD-2D isometric rendering, TypeScript + Three.js, no engine — built from scratch.
+
+---
+
+```
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+ ░  WNCORE RELAY · SIGNAL ACTIVE · NODE ID 07-DHK · STATUS: LIVE         ░
+ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+```
+
+---
+
+## What This Is
+
+Each run generates a Drifter from the faction logbook, drops them into a procedurally-built zone, and asks one question: **can you extract before the signal drops?**
+
+The world is 6 months post-collapse. The sky is not right. Different zones carry different wrongness states — Finland reads grey and familiar, Nepal's sky is fully red. The further in you go, the less the atmosphere resembles something that should exist.
+
+You are not the protagonist of *Another Sky*. You are a Drifter. One of many. The logbook gets longer whether you survive or not.
+
+---
+
+## Sky State Progression
+
+The sky is the primary visual language for reality-break. It follows a discrete named-state system — not a gradient.
+
+<!--
+SVG: Sky wrongness state progression bar
+-->
+<p align="center">
+<img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgODIwIDExMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iODIwIiBoZWlnaHQ9IjExMCIgc3R5bGU9Im1heC13aWR0aDoxMDAlO2JhY2tncm91bmQ6IzA4MDkwZDtib3JkZXItcmFkaXVzOjZweDsiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAuc2t5LWxhYmVsIHsgZm9udC1mYW1pbHk6ICdTaGFyZSBUZWNoIE1vbm8nLCBtb25vc3BhY2UsIG1vbm9zcGFjZTsgZm9udC1zaXplOiA5cHg7IGZpbGw6IHJnYmEoMjAwLDIxNSwyMzAsMC43NSk7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0KICAgICAgLnNreS1zdWIgICB7IGZvbnQtZmFtaWx5OiAnU2hhcmUgVGVjaCBNb25vJywgbW9ub3NwYWNlLCBtb25vc3BhY2U7IGZvbnQtc2l6ZTogN3B4OyBmaWxsOiByZ2JhKDE0MCwxNjAsMTgwLDAuNSk7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0KICAgICAgLnNreS1hcnJvdyB7IHN0cm9rZTogcmdiYSgyNTUsMjU1LDI1NSwwLjEyKTsgc3Ryb2tlLXdpZHRoOiAxOyBmaWxsOiBub25lOyBtYXJrZXItZW5kOiB1cmwoI2Fycik7IH0KICAgIDwvc3R5bGU+CiAgICA8bWFya2VyIGlkPSJhcnIiIG1hcmtlcldpZHRoPSI2IiBtYXJrZXJIZWlnaHQ9IjYiIHJlZlg9IjMiIHJlZlk9IjMiIG9yaWVudD0iYXV0byI+CiAgICAgIDxwYXRoIGQ9Ik0wLDAgTDYsMyBMMCw2IFoiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xNSkiLz4KICAgIDwvbWFya2VyPgogICAgPGZpbHRlciBpZD0iZ2xvdyI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjIuNSIgcmVzdWx0PSJibHVyIi8+CiAgICAgIDxmZU1lcmdlPjxmZU1lcmdlTm9kZSBpbj0iYmx1ciIvPjxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPjwvZmVNZXJnZT4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KCiAgPCEtLSBTdGF0ZSBibG9ja3MgLS0+CiAgPCEtLSBTVU5OWSAtLT4KICA8cmVjdCB4PSIxMCIgIHk9IjI4IiB3aWR0aD0iNzYiIGhlaWdodD0iNDQiIHJ4PSIzIiBmaWxsPSIjZThkOTdhIiBvcGFjaXR5PSIwLjE4Ii8+CiAgPHJlY3QgeD0iMTAiICB5PSIyOCIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iI2U4ZDk3YSIgb3BhY2l0eT0iMC43Ii8+CiAgPHRleHQgeD0iNDgiICB5PSI1MiIgY2xhc3M9InNreS1sYWJlbCI+U1VOTlk8L3RleHQ+CiAgPHRleHQgeD0iNDgiICB5PSI2NCIgY2xhc3M9InNreS1zdWIiPm5vbWluYWw8L3RleHQ+CgogIDwhLS0gQkxVRSAtLT4KICA8cmVjdCB4PSI5OCIgIHk9IjI4IiB3aWR0aD0iNzYiIGhlaWdodD0iNDQiIHJ4PSIzIiBmaWxsPSIjNmFhY2RiIiBvcGFjaXR5PSIwLjE4Ii8+CiAgPHJlY3QgeD0iOTgiICB5PSIyOCIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iIzZhYWNkYiIgb3BhY2l0eT0iMC43Ii8+CiAgPHRleHQgeD0iMTM2IiB5PSI1MiIgY2xhc3M9InNreS1sYWJlbCI+QkxVRTwvdGV4dD4KICA8dGV4dCB4PSIxMzYiIHk9IjY0IiBjbGFzcz0ic2t5LXN1YiI+c2hpZnRlZDwvdGV4dD4KCiAgPCEtLSBHUkVZIC0tPgogIDxyZWN0IHg9IjE4NiIgeT0iMjgiIHdpZHRoPSI3NiIgaGVpZ2h0PSI0NCIgcng9IjMiIGZpbGw9IiM4YTlhYWEiIG9wYWNpdHk9IjAuMTgiLz4KICA8cmVjdCB4PSIxODYiIHk9IjI4IiB3aWR0aD0iNzYiIGhlaWdodD0iMyIgIHJ4PSIyIiBmaWxsPSIjOGE5YWFhIiBvcGFjaXR5PSIwLjciLz4KICA8dGV4dCB4PSIyMjQiIHk9IjUyIiBjbGFzcz0ic2t5LWxhYmVsIj5HUkVZPC90ZXh0PgogIDx0ZXh0IHg9IjIyNCIgeT0iNjQiIGNsYXNzPSJza3ktc3ViIj5vdmVyY2FzdDwvdGV4dD4KCiAgPCEtLSBSQUlOWSAtLT4KICA8cmVjdCB4PSIyNzQiIHk9IjI4IiB3aWR0aD0iNzYiIGhlaWdodD0iNDQiIHJ4PSIzIiBmaWxsPSIjNWE3YWFhIiBvcGFjaXR5PSIwLjIyIi8+CiAgPHJlY3QgeD0iMjc0IiB5PSIyOCIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iIzVhN2FhYSIgb3BhY2l0eT0iMC44Ii8+CiAgPHRleHQgeD0iMzEyIiB5PSI1MiIgY2xhc3M9InNreS1sYWJlbCI+UkFJTlk8L3RleHQ+CiAgPHRleHQgeD0iMzEyIiB5PSI2NCIgY2xhc3M9InNreS1zdWIiPnJhaW4gYWN0aXZlPC90ZXh0PgoKICA8IS0tIFNUQVRJQyAtLT4KICA8cmVjdCB4PSIzNjIiIHk9IjI4IiB3aWR0aD0iNzYiIGhlaWdodD0iNDQiIHJ4PSIzIiBmaWxsPSIjOGE2YWFhIiBvcGFjaXR5PSIwLjIyIi8+CiAgPHJlY3QgeD0iMzYyIiB5PSIyOCIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iIzhhNmFhYSIgb3BhY2l0eT0iMC44NSIvPgogIDx0ZXh0IHg9IjQwMCIgeT0iNTIiIGNsYXNzPSJza3ktbGFiZWwiPlNUQVRJQzwvdGV4dD4KICA8dGV4dCB4PSI0MDAiIHk9IjY0IiBjbGFzcz0ic2t5LXN1YiI+aW50ZXJmZXJlbmNlPC90ZXh0PgoKICA8IS0tIFNUT1JNWSAtLT4KICA8cmVjdCB4PSI0NTAiIHk9IjI4IiB3aWR0aD0iNzYiIGhlaWdodD0iNDQiIHJ4PSIzIiBmaWxsPSIjNmEzYThhIiBvcGFjaXR5PSIwLjI4Ii8+CiAgPHJlY3QgeD0iNDUwIiB5PSIyOCIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iIzZhM2E4YSIgb3BhY2l0eT0iMC45Ii8+CiAgPHRleHQgeD0iNDg4IiB5PSI1MiIgY2xhc3M9InNreS1sYWJlbCI+U1RPUk1ZPC90ZXh0PgogIDx0ZXh0IHg9IjQ4OCIgeT0iNjQiIGNsYXNzPSJza3ktc3ViIj5zZXZlcmU8L3RleHQ+CgogIDwhLS0gQSBESUZGRVJFTlQgU0tZIC0tPgogIDxyZWN0IHg9IjUzOCIgeT0iMjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iNTIiIHJ4PSIzIiBmaWxsPSIjYWEzYTNhIiBvcGFjaXR5PSIwLjMiLz4KICA8cmVjdCB4PSI1MzgiIHk9IjIwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iI2ZmNGEzYSIgb3BhY2l0eT0iMC45NSIgZmlsdGVyPSJ1cmwoI2dsb3cpIi8+CiAgPHRleHQgeD0iNTg4IiB5PSI0NiIgY2xhc3M9InNreS1sYWJlbCI+QSBESUZGRVJFTlQ8L3RleHQ+CiAgPHRleHQgeD0iNTg4IiB5PSI1OCIgY2xhc3M9InNreS1sYWJlbCI+U0tZPC90ZXh0PgogIDx0ZXh0IHg9IjU4OCIgeT0iNjgiIGNsYXNzPSJza3ktc3ViIj5yZWFsaXR5IGJyZWFrPC90ZXh0PgoKICA8IS0tIEFOT1RIRVIgU0tZIC0tPgogIDxyZWN0IHg9IjY1MiIgeT0iMTIiIHdpZHRoPSIxMDgiIGhlaWdodD0iNjAiIHJ4PSIzIiBmaWxsPSIjMGEwYTFhIiBvcGFjaXR5PSIwLjUiLz4KICA8cmVjdCB4PSI2NTIiIHk9IjEyIiB3aWR0aD0iMTA4IiBoZWlnaHQ9IjMiICByeD0iMiIgZmlsbD0iIzNhMmFmZiIgb3BhY2l0eT0iMSIgZmlsdGVyPSJ1cmwoI2dsb3cpIi8+CiAgPHRleHQgeD0iNzA2IiB5PSI0MCIgY2xhc3M9InNreS1sYWJlbCI+QU5PVEhFUjwvdGV4dD4KICA8dGV4dCB4PSI3MDYiIHk9IjUyIiBjbGFzcz0ic2t5LWxhYmVsIj5TS1k8L3RleHQ+CiAgPHRleHQgeD0iNzA2IiB5PSI2NCIgY2xhc3M9InNreS1zdWIiPmZ1bGx5IGFsaWVuPC90ZXh0PgoKICA8IS0tIEFycm93cyBiZXR3ZWVuIHN0YXRlcyAtLT4KICA8bGluZSB4MT0iODciICB5MT0iNTAiIHgyPSI5NyIgIHkyPSI1MCIgY2xhc3M9InNreS1hcnJvdyIvPgogIDxsaW5lIHgxPSIxNzUiIHkxPSI1MCIgeDI9IjE4NSIgeTI9IjUwIiBjbGFzcz0ic2t5LWFycm93Ii8+CiAgPGxpbmUgeDE9IjI2MyIgeTE9IjUwIiB4Mj0iMjczIiB5Mj0iNTAiIGNsYXNzPSJza3ktYXJyb3ciLz4KICA8bGluZSB4MT0iMzUxIiB5MT0iNTAiIHgyPSIzNjEiIHkyPSI1MCIgY2xhc3M9InNreS1hcnJvdyIvPgogIDxsaW5lIHgxPSI0MzkiIHkxPSI1MCIgeDI9IjQ0OSIgeTI9IjUwIiBjbGFzcz0ic2t5LWFycm93Ii8+CiAgPGxpbmUgeDE9IjUyNyIgeTE9IjUwIiB4Mj0iNTM3IiB5Mj0iNTAiIGNsYXNzPSJza3ktYXJyb3ciLz4KICA8bGluZSB4MT0iNjM5IiB5MT0iNDYiIHgyPSI2NTEiIHkyPSI0NiIgY2xhc3M9InNreS1hcnJvdyIvPgoKICA8IS0tIERSSUZURVIgem9uZSByYW5nZSBicmFja2V0IC0tPgogIDxsaW5lIHgxPSIxODYiIHkxPSI5NiIgeDI9IjUyNiIgeTI9Ijk2IiBzdHJva2U9InJnYmEoODQsMjMwLDE2NCwwLjQpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8bGluZSB4MT0iMTg2IiB5MT0iOTIiIHgyPSIxODYiIHkyPSIxMDAiIHN0cm9rZT0icmdiYSg4NCwyMzAsMTY0LDAuNCkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDxsaW5lIHgxPSI1MjYiIHkxPSI5MiIgeDI9IjUyNiIgeTI9IjEwMCIgc3Ryb2tlPSJyZ2JhKDg0LDIzMCwxNjQsMC40KSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMzU2IiB5PSIxMDgiIGNsYXNzPSJza3ktc3ViIiBzdHlsZT0iZmlsbDpyZ2JhKDg0LDIzMCwxNjQsMC41KTtmb250LXNpemU6Ny41cHg7Ij5EUklGVEVSJ1MgVEFMRSDCtyA2IG1vbnRocyBwb3N0LWNvbGxhcHNlPC90ZXh0Pgo8L3N2Zz4=" width="820" alt="diagram" style="max-width:100%"/>
+</p>
+
+> **Obsedia Rain** (Black Rain / Moon Rain / Starfall) is a separate named hazard state that overrides the sky — a constant black oil-like rain that makes the sky visually bleed downward. Treated as its own system, not a weather effect.
+
+---
+
+## Architecture
+
+<!--
+SVG: System architecture diagram
+-->
+<p align="center">
+<img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNzYwIDQ4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNzYwIiBoZWlnaHQ9IjQ4MCIgc3R5bGU9Im1heC13aWR0aDoxMDAlO2JhY2tncm91bmQ6IzA2MDkwZjtib3JkZXItcmFkaXVzOjZweDsiPgogIDxkZWZzPgogICAgPHN0eWxlPgogICAgICAubm9kZSAgICAgIHsgZm9udC1mYW1pbHk6ICdTaGFyZSBUZWNoIE1vbm8nLCBtb25vc3BhY2UsIG1vbm9zcGFjZTsgZm9udC1zaXplOiA4LjVweDsgZmlsbDogcmdiYSgyMTAsMjI4LDI0NCwwLjkpOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9CiAgICAgIC5ub2RlLXN1YiAgeyBmb250LWZhbWlseTogJ1NoYXJlIFRlY2ggTW9ubycsIG1vbm9zcGFjZSwgbW9ub3NwYWNlOyBmb250LXNpemU6IDYuNXB4OyBmaWxsOiByZ2JhKDE0MCwxNjUsMTkwLDAuNTUpOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9CiAgICAgIC5ncm91cC1sYmwgeyBmb250LWZhbWlseTogJ1NoYXJlIFRlY2ggTW9ubycsIG1vbm9zcGFjZSwgbW9ub3NwYWNlOyBmb250LXNpemU6IDdweDsgZmlsbDogcmdiYSg4NCwyMzAsMTY0LDAuNTUpOyBsZXR0ZXItc3BhY2luZzogMS41cHg7IH0KICAgICAgLndpcmUgICAgICB7IHN0cm9rZTogcmdiYSg4NCwyMzAsMTY0LDAuMTgpOyBzdHJva2Utd2lkdGg6IDE7IGZpbGw6IG5vbmU7IH0KICAgICAgLndpcmUtaG90ICB7IHN0cm9rZTogcmdiYSg4NCwyMzAsMTY0LDAuNSk7ICBzdHJva2Utd2lkdGg6IDEuMjsgZmlsbDogbm9uZTsgfQogICAgPC9zdHlsZT4KICAgIDxmaWx0ZXIgaWQ9Im5nIj4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMyIgcmVzdWx0PSJiIi8+CiAgICAgIDxmZU1lcmdlPjxmZU1lcmdlTm9kZSBpbj0iYiIvPjxmZU1lcmdlTm9kZSBpbj0iU291cmNlR3JhcGhpYyIvPjwvZmVNZXJnZT4KICAgIDwvZmlsdGVyPgogICAgPCEtLSBib3ggdGVtcGxhdGVzIC0tPgogICAgPCEtLSBncmVlbiBhY2NlbnQgLS0+CiAgICA8cmVjdCBpZD0iYngtZyIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIzNiIgcng9IjMiIGZpbGw9InJnYmEoODQsMjMwLDE2NCwwLjA3KSIgc3Ryb2tlPSJyZ2JhKDg0LDIzMCwxNjQsMC4zNSkiIHN0cm9rZS13aWR0aD0iMSIvPgogICAgPCEtLSBibHVlIGFjY2VudCAtLT4KICAgIDxyZWN0IGlkPSJieC1iIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjM2IiByeD0iMyIgZmlsbD0icmdiYSgxMDAsMTYwLDIyMCwwLjA3KSIgc3Ryb2tlPSJyZ2JhKDEwMCwxNjAsMjIwLDAuMzUpIiBzdHJva2Utd2lkdGg9IjEiLz4KICAgIDwhLS0gcmVkIGFjY2VudCAtLT4KICAgIDxyZWN0IGlkPSJieC1yIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjM2IiByeD0iMyIgZmlsbD0icmdiYSgyMjAsODAsODAsMC4wNykiICBzdHJva2U9InJnYmEoMjIwLDgwLDgwLDAuMzUpIiAgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgICA8IS0tIGRpbSAtLT4KICAgIDxyZWN0IGlkPSJieC1kIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjM2IiByeD0iMyIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMTIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8L2RlZnM+CgogIDwhLS0g4pSA4pSAIEVOVFJZIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgCAtLT4KICA8cmVjdCB4PSIzMTAiIHk9IjE0IiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjM2IiByeD0iMyIgZmlsbD0icmdiYSg4NCwyMzAsMTY0LDAuMSkiIHN0cm9rZT0icmdiYSg4NCwyMzAsMTY0LDAuNSkiIHN0cm9rZS13aWR0aD0iMS4yIiBmaWx0ZXI9InVybCgjbmcpIi8+CiAgPHRleHQgeD0iMzgwIiB5PSIyOSIgY2xhc3M9Im5vZGUiIHN0eWxlPSJmb250LXNpemU6OXB4O2ZpbGw6cmdiYSg4NCwyMzAsMTY0LDAuOTUpOyI+bWVudS5odG1sPC90ZXh0PgogIDx0ZXh0IHg9IjM4MCIgeT0iNDIiIGNsYXNzPSJub2RlLXN1YiI+ZW50cnkgcG9pbnQgwrcgY2luZW1hdGljIHNoZWxsPC90ZXh0PgoKICA8IS0tIHdpcmUgZG93biB0byBIb21lU2NyZWVuIC0tPgogIDxsaW5lIHgxPSIzODAiIHkxPSI1MCIgeDI9IjM4MCIgeTI9IjY4IiBjbGFzcz0id2lyZS1ob3QiLz4KCiAgPCEtLSDilIDilIAgVUkgTEFZRVIg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAIC0tPgogIDx0ZXh0IHg9IjE4IiB5PSI4MCIgY2xhc3M9Imdyb3VwLWxibCI+VUkgTEFZRVI8L3RleHQ+CiAgPHJlY3QgeD0iMjgwIiB5PSI2OCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIzNiIgcng9IjMiIGZpbGw9InJnYmEoMTAwLDE2MCwyMjAsMC4wOCkiIHN0cm9rZT0icmdiYSgxMDAsMTYwLDIyMCwwLjQpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIzODAiIHk9IjgzIiBjbGFzcz0ibm9kZSI+SG9tZVNjcmVlbjwvdGV4dD4KICA8dGV4dCB4PSIzODAiIHk9Ijk1IiBjbGFzcz0ibm9kZS1zdWIiPmhvbWUtc2NyZWVuLnRzIMK3IEFwcE1vZGUgc3RhdGUgbWFjaGluZTwvdGV4dD4KCiAgPCEtLSB3aXJlIHRvIEdhbWVSdW50aW1lIGFuZCBHYW1lcGxheUVuZ2luZSAtLT4KICA8bGluZSB4MT0iMzUwIiB5MT0iMTA0IiB4Mj0iMjMwIiB5Mj0iMTQwIiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSI0MTAiIHkxPSIxMDQiIHgyPSI1MzAiIHkyPSIxNDAiIGNsYXNzPSJ3aXJlIi8+CgogIDwhLS0gRHJpZnRlckF1ZGlvIGJlc2lkZSBIb21lU2NyZWVuIC0tPgogIDxyZWN0IHg9IjEwIiB5PSI2OCIgd2lkdGg9IjExMCIgaGVpZ2h0PSIzNiIgcng9IjMiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEyKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNjUiIHk9IjgzIiBjbGFzcz0ibm9kZSI+RHJpZnRlckF1ZGlvPC90ZXh0PgogIDx0ZXh0IHg9IjY1IiB5PSI5NSIgY2xhc3M9Im5vZGUtc3ViIj5XZWIgQXVkaW8gQVBJIMK3IG5vIGRlcHM8L3RleHQ+CiAgPGxpbmUgeDE9IjI4MCIgeTE9Ijg2IiB4Mj0iMTIwIiB5Mj0iODYiIGNsYXNzPSJ3aXJlIiBzdHJva2UtZGFzaGFycmF5PSIzLDMiLz4KCiAgPCEtLSDilIDilIAgUlVOVElNRSArIEVOR0lORSBST1cg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAIC0tPgogIDx0ZXh0IHg9IjE4IiB5PSIxNTIiIGNsYXNzPSJncm91cC1sYmwiPlJVTlRJTUU8L3RleHQ+CiAgPHJlY3QgeD0iMTY1IiB5PSIxNDAiIHdpZHRoPSIxMzAiIGhlaWdodD0iMzYiIHJ4PSIzIiBmaWxsPSJyZ2JhKDEwMCwxNjAsMjIwLDAuMDcpIiBzdHJva2U9InJnYmEoMTAwLDE2MCwyMjAsMC4zMikiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjIzMCIgeT0iMTU1IiBjbGFzcz0ibm9kZSI+R2FtZVJ1bnRpbWU8L3RleHQ+CiAgPHRleHQgeD0iMjMwIiB5PSIxNjciIGNsYXNzPSJub2RlLXN1YiI+R2FtZVJ1bnRpbWUudHMgwrcgdGljayBsb29wPC90ZXh0PgoKICA8dGV4dCB4PSI0NjAiIHk9IjE1MiIgY2xhc3M9Imdyb3VwLWxibCI+RU5HSU5FPC90ZXh0PgogIDxyZWN0IHg9IjQ2MCIgeT0iMTQwIiB3aWR0aD0iMTMwIiBoZWlnaHQ9IjM2IiByeD0iMyIgZmlsbD0icmdiYSgxMDAsMTYwLDIyMCwwLjA3KSIgc3Ryb2tlPSJyZ2JhKDEwMCwxNjAsMjIwLDAuMzIpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI1MjUiIHk9IjE1NSIgY2xhc3M9Im5vZGUiPkdhbWVwbGF5RW5naW5lPC90ZXh0PgogIDx0ZXh0IHg9IjUyNSIgeT0iMTY3IiBjbGFzcz0ibm9kZS1zdWIiPmNvbXBvc2l0aW9uIHJvb3Q8L3RleHQ+CgogIDwhLS0gd2lyZXMgZG93biAtLT4KICA8bGluZSB4MT0iMjMwIiB5MT0iMTc2IiB4Mj0iMjMwIiB5Mj0iMjEwIiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSI1MjUiIHkxPSIxNzYiIHgyPSI1MjUiIHkyPSIyMTAiIGNsYXNzPSJ3aXJlIi8+CiAgPCEtLSBjcm9zcy13aXJlIC0tPgogIDxsaW5lIHgxPSIyOTUiIHkxPSIxNTgiIHgyPSI0NjAiIHkyPSIxNTgiIGNsYXNzPSJ3aXJlIiBzdHJva2UtZGFzaGFycmF5PSIzLDMiLz4KCiAgPCEtLSDilIDilIAgUkVOREVSIExBWUVSIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgCAtLT4KICA8dGV4dCB4PSIxOCIgeT0iMjIyIiBjbGFzcz0iZ3JvdXAtbGJsIj5SRU5ERVIgUElQRUxJTkU8L3RleHQ+CgogIDwhLS0gSXNvbWV0cmljUmVuZGVyZXIgLS0+CiAgPHJlY3QgeD0iMTMwIiB5PSIyMTAiIHdpZHRoPSIyMDAiIGhlaWdodD0iMzYiIHJ4PSIzIiBmaWxsPSJyZ2JhKDg0LDIzMCwxNjQsMC4wNikiIHN0cm9rZT0icmdiYSg4NCwyMzAsMTY0LDAuMjgpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIyMzAiIHk9IjIyNSIgY2xhc3M9Im5vZGUiPklzb21ldHJpY1JlbmRlcmVyPC90ZXh0PgogIDx0ZXh0IHg9IjIzMCIgeT0iMjM3IiBjbGFzcz0ibm9kZS1zdWIiPm9yY2hlc3RyYXRlcyBhbGwgMTEgcmVuZGVyIHN5c3RlbXM8L3RleHQ+CgogIDwhLS0gcmVuZGVyIHN1Yi1zeXN0ZW1zLCB0d28gcm93cyAtLT4KICA8IS0tIHJvdyAxIC0tPgogIDxyZWN0IHg9IjE4IiAgeT0iMjYyIiB3aWR0aD0iODgiIGhlaWdodD0iMzAiIHJ4PSIyIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNjIiICB5PSIyNzUiIGNsYXNzPSJub2RlIj5Ta3lTeXN0ZW08L3RleHQ+CiAgPHRleHQgeD0iNjIiICB5PSIyODUiIGNsYXNzPSJub2RlLXN1YiI+OSB3cm9uZ25lc3Mgc3RhdGVzPC90ZXh0PgoKICA8cmVjdCB4PSIxMTYiIHk9IjI2MiIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE2MCIgeT0iMjc1IiBjbGFzcz0ibm9kZSI+UGl4ZWxQaXBlbGluZTwvdGV4dD4KICA8dGV4dCB4PSIxNjAiIHk9IjI4NSIgY2xhc3M9Im5vZGUtc3ViIj4zODTDlzIxNiByZW5kZXIgdGFyZ2V0PC90ZXh0PgoKICA8cmVjdCB4PSIyMTQiIHk9IjI2MiIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjI1OCIgeT0iMjc1IiBjbGFzcz0ibm9kZSI+TGlnaHRpbmdDdHJsPC90ZXh0PgogIDx0ZXh0IHg9IjI1OCIgeT0iMjg1IiBjbGFzcz0ibm9kZS1zdWIiPmtleSArIGZpbGwgKyBhbWJpZW50PC90ZXh0PgoKICA8cmVjdCB4PSIzMTIiIHk9IjI2MiIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjM1NiIgeT0iMjc1IiBjbGFzcz0ibm9kZSI+R29kUmF5TGF5ZXI8L3RleHQ+CiAgPHRleHQgeD0iMzU2IiB5PSIyODUiIGNsYXNzPSJub2RlLXN1YiI+R1BVIGNyZXB1c2N1bGFyPC90ZXh0PgoKICA8IS0tIHJvdyAyIC0tPgogIDxyZWN0IHg9IjE4IiAgeT0iMzA0IiB3aWR0aD0iODgiIGhlaWdodD0iMzAiIHJ4PSIyIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNjIiICB5PSIzMTciIGNsYXNzPSJub2RlIj5SYWluU3lzdGVtPC90ZXh0PgogIDx0ZXh0IHg9IjYyIiAgeT0iMzI3IiBjbGFzcz0ibm9kZS1zdWIiPnJlZ3VsYXIgKyBPYnNlZGlhPC90ZXh0PgoKICA8cmVjdCB4PSIxMTYiIHk9IjMwNCIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE2MCIgeT0iMzE3IiBjbGFzcz0ibm9kZSI+RHVzdFBhcnRpY2xlczwvdGV4dD4KICA8dGV4dCB4PSIxNjAiIHk9IjMyNyIgY2xhc3M9Im5vZGUtc3ViIj5HUFUgcG9pbnQgc3ByaXRlczwvdGV4dD4KCiAgPHJlY3QgeD0iMjE0IiB5PSIzMDQiIHdpZHRoPSI4OCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIyNTgiIHk9IjMxNyIgY2xhc3M9Im5vZGUiPkF0bW9zcGhlcmVDdHJsPC90ZXh0PgogIDx0ZXh0IHg9IjI1OCIgeT0iMzI3IiBjbGFzcz0ibm9kZS1zdWIiPkNTUyBsZW5zIG92ZXJsYXlzPC90ZXh0PgoKICA8cmVjdCB4PSIzMTIiIHk9IjMwNCIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjM1NiIgeT0iMzE3IiBjbGFzcz0ibm9kZSI+U1ZHQnVpbGRpbmdzPC90ZXh0PgogIDx0ZXh0IHg9IjM1NiIgeT0iMzI3IiBjbGFzcz0ibm9kZS1zdWIiPmZhY3RvcnkgKyByYXN0ZXJpemVyPC90ZXh0PgoKICA8cmVjdCB4PSI0MTAiIHk9IjMwNCIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjQ1NCIgeT0iMzE3IiBjbGFzcz0ibm9kZSI+SXNvVGlsZU1hcDwvdGV4dD4KICA8dGV4dCB4PSI0NTQiIHk9IjMyNyIgY2xhc3M9Im5vZGUtc3ViIj50aWxlIGdlb21ldHJ5PC90ZXh0PgoKICA8cmVjdCB4PSI1MDgiIHk9IjMwNCIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjU1MiIgeT0iMzE3IiBjbGFzcz0ibm9kZSI+VGV4dHVyZUNhY2hlPC90ZXh0PgogIDx0ZXh0IHg9IjU1MiIgeT0iMzI3IiBjbGFzcz0ibm9kZS1zdWIiPkxSVSDCtyBHUFUgZXZpY3Rpb248L3RleHQ+CgogIDwhLS0gd2lyZXMgZnJvbSBJc29tZXRyaWNSZW5kZXJlciBkb3duIHRvIHJlbmRlciBzeXN0ZW1zIC0tPgogIDxsaW5lIHgxPSIyMzAiIHkxPSIyNDYiIHgyPSI2MiIgIHkyPSIyNjIiIGNsYXNzPSJ3aXJlIi8+CiAgPGxpbmUgeDE9IjIzMCIgeTE9IjI0NiIgeDI9IjE2MCIgeTI9IjI2MiIgY2xhc3M9IndpcmUiLz4KICA8bGluZSB4MT0iMjMwIiB5MT0iMjQ2IiB4Mj0iMjU4IiB5Mj0iMjYyIiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSIyMzAiIHkxPSIyNDYiIHgyPSIzNTYiIHkyPSIyNjIiIGNsYXNzPSJ3aXJlIi8+CiAgPGxpbmUgeDE9IjIzMCIgeTE9IjI0NiIgeDI9IjYyIiAgeTI9IjMwNCIgY2xhc3M9IndpcmUiLz4KICA8bGluZSB4MT0iMjMwIiB5MT0iMjQ2IiB4Mj0iMTYwIiB5Mj0iMzA0IiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSIyMzAiIHkxPSIyNDYiIHgyPSIyNTgiIHkyPSIzMDQiIGNsYXNzPSJ3aXJlIi8+CiAgPGxpbmUgeDE9IjIzMCIgeTE9IjI0NiIgeDI9IjM1NiIgeTI9IjMwNCIgY2xhc3M9IndpcmUiLz4KICA8bGluZSB4MT0iMjMwIiB5MT0iMjQ2IiB4Mj0iNDU0IiB5Mj0iMzA0IiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSIyMzAiIHkxPSIyNDYiIHgyPSI1NTIiIHkyPSIzMDQiIGNsYXNzPSJ3aXJlIi8+CgogIDwhLS0g4pSA4pSAIEdBTUVQTEFZIExBWUVSIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgCAtLT4KICA8dGV4dCB4PSI0NjAiIHk9IjIyMiIgY2xhc3M9Imdyb3VwLWxibCI+R0FNRVBMQVkgTEFZRVI8L3RleHQ+CgogIDwhLS0gZ2FtZXBsYXkgc3ViLXN5c3RlbXMgLS0+CiAgPHJlY3QgeD0iNDIwIiB5PSIyMTAiIHdpZHRoPSI4OCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI0NjQiIHk9IjIyMyIgY2xhc3M9Im5vZGUiPkRyaWZ0ZXJFbnRpdHk8L3RleHQ+CiAgPHRleHQgeD0iNDY0IiB5PSIyMzMiIGNsYXNzPSJub2RlLXN1YiI+c3RhdHMgwrcgc3RhdGUgwrcgcm9zdGVyPC90ZXh0PgoKICA8cmVjdCB4PSI1MTgiIHk9IjIxMCIgd2lkdGg9Ijg4IiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjU2MiIgeT0iMjIzIiBjbGFzcz0ibm9kZSI+SHVza1N5c3RlbTwvdGV4dD4KICA8dGV4dCB4PSI1NjIiIHk9IjIzMyIgY2xhc3M9Im5vZGUtc3ViIj5wYXRyb2wgwrcgZXNjYWxhdGlvbiBBSTwvdGV4dD4KCiAgPHJlY3QgeD0iNDIwIiB5PSIyNTIiIHdpZHRoPSI4OCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI0NjQiIHk9IjI2NSIgY2xhc3M9Im5vZGUiPlpvbmVTdHJlYW1lcjwvdGV4dD4KICA8dGV4dCB4PSI0NjQiIHk9IjI3NSIgY2xhc3M9Im5vZGUtc3ViIj4zw5czIHdpbmRvdyDCtyBMUlU8L3RleHQ+CgogIDxyZWN0IHg9IjUxOCIgeT0iMjUyIiB3aWR0aD0iODgiIGhlaWdodD0iMzAiIHJ4PSIyIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNTYyIiB5PSIyNjUiIGNsYXNzPSJub2RlIj5Xb3JsZEluZm9MYXllcjwvdGV4dD4KICA8dGV4dCB4PSI1NjIiIHk9IjI3NSIgY2xhc3M9Im5vZGUtc3ViIj5sb2dib29rIMK3IGNyb3NzLXJ1bjwvdGV4dD4KCiAgPHJlY3QgeD0iNDIwIiB5PSIyOTQiIHdpZHRoPSI4OCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI0NjQiIHk9IjMwNyIgY2xhc3M9Im5vZGUiPlJ1bk1hbmFnZXI8L3RleHQ+CiAgPHRleHQgeD0iNDY0IiB5PSIzMTciIGNsYXNzPSJub2RlLXN1YiI+cGVybWFkZWF0aCDCtyByb3N0ZXI8L3RleHQ+CgogIDxyZWN0IHg9IjUxOCIgeT0iMjk0IiB3aWR0aD0iODgiIGhlaWdodD0iMzAiIHJ4PSIyIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNTYyIiB5PSIzMDciIGNsYXNzPSJub2RlIj5DYXRhbG9nU3lzdGVtPC90ZXh0PgogIDx0ZXh0IHg9IjU2MiIgeT0iMzE3IiBjbGFzcz0ibm9kZS1zdWIiPmRpc2NvdmVyeSDCtyBsb2dib29rPC90ZXh0PgoKICA8IS0tIHdpcmVzIGZyb20gR2FtZXBsYXlFbmdpbmUgdG8gZ2FtZXBsYXkgc3lzdGVtcyAtLT4KICA8bGluZSB4MT0iNTI1IiB5MT0iMTc2IiB4Mj0iNDY0IiB5Mj0iMjEwIiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSI1MjUiIHkxPSIxNzYiIHgyPSI1NjIiIHkyPSIyMTAiIGNsYXNzPSJ3aXJlIi8+CiAgPGxpbmUgeDE9IjUyNSIgeTE9IjE3NiIgeDI9IjQ2NCIgeTI9IjI1MiIgY2xhc3M9IndpcmUiLz4KICA8bGluZSB4MT0iNTI1IiB5MT0iMTc2IiB4Mj0iNTYyIiB5Mj0iMjUyIiBjbGFzcz0id2lyZSIvPgogIDxsaW5lIHgxPSI1MjUiIHkxPSIxNzYiIHgyPSI0NjQiIHkyPSIyOTQiIGNsYXNzPSJ3aXJlIi8+CiAgPGxpbmUgeDE9IjUyNSIgeTE9IjE3NiIgeDI9IjU2MiIgeTI9IjI5NCIgY2xhc3M9IndpcmUiLz4KCiAgPCEtLSDilIDilIAgREFUQSBMQVlFUiDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIDilIAgLS0+CiAgPHRleHQgeD0iMTgiIHk9IjM1NiIgY2xhc3M9Imdyb3VwLWxibCI+REFUQSBMQVlFUjwvdGV4dD4KCiAgPHJlY3QgeD0iMTgiICB5PSIzNjIiIHdpZHRoPSIxMTAiIGhlaWdodD0iMzAiIHJ4PSIyIiBmaWxsPSJyZ2JhKDIyMCwxODAsNjAsMC4wNikiIHN0cm9rZT0icmdiYSgyMjAsMTgwLDYwLDAuMjUpIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSI3MyIgIHk9IjM3NSIgY2xhc3M9Im5vZGUiPmh1c2tfcmVjb3Jkcy50czwvdGV4dD4KICA8dGV4dCB4PSI3MyIgIHk9IjM4NSIgY2xhc3M9Im5vZGUtc3ViIj4yMyB0aHJlYXQgdHlwZXMgwrcgc3Vydml2b3IgUE9WPC90ZXh0PgoKICA8cmVjdCB4PSIxMzgiIHk9IjM2MiIgd2lkdGg9IjExMCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjIwLDE4MCw2MCwwLjA2KSIgc3Ryb2tlPSJyZ2JhKDIyMCwxODAsNjAsMC4yNSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjE5MyIgeT0iMzc1IiBjbGFzcz0ibm9kZSI+ZmFjdF9wb29scy50czwvdGV4dD4KICA8dGV4dCB4PSIxOTMiIHk9IjM4NSIgY2xhc3M9Im5vZGUtc3ViIj4yNDArIGxvcmUgZW50cmllcyDCtyA3IHBvb2xzPC90ZXh0PgoKICA8cmVjdCB4PSIyNTgiIHk9IjM2MiIgd2lkdGg9IjExMCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjIwLDE4MCw2MCwwLjA2KSIgc3Ryb2tlPSJyZ2JhKDIyMCwxODAsNjAsMC4yNSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjMxMyIgeT0iMzc1IiBjbGFzcz0ibm9kZSI+d29ybGRnZW4udHM8L3RleHQ+CiAgPHRleHQgeD0iMzEzIiB5PSIzODUiIGNsYXNzPSJub2RlLXN1YiI+NiBwcm9jZWR1cmFsIHpvbmVzPC90ZXh0PgoKICA8cmVjdCB4PSIzNzgiIHk9IjM2MiIgd2lkdGg9IjExMCIgaGVpZ2h0PSIzMCIgcng9IjIiIGZpbGw9InJnYmEoMjIwLDE4MCw2MCwwLjA2KSIgc3Ryb2tlPSJyZ2JhKDIyMCwxODAsNjAsMC4yNSkiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjQzMyIgeT0iMzc1IiBjbGFzcz0ibm9kZSI+cmVsYXlfc3RhdGlvbi5qc29uPC90ZXh0PgogIDx0ZXh0IHg9IjQzMyIgeT0iMzg1IiBjbGFzcz0ibm9kZS1zdWIiPkRoYWthIMK3IGhhbmQtYXV0aG9yZWQ8L3RleHQ+CgogIDxyZWN0IHg9IjQ5OCIgeT0iMzYyIiB3aWR0aD0iMTEwIiBoZWlnaHQ9IjMwIiByeD0iMiIgZmlsbD0icmdiYSgyMjAsMTgwLDYwLDAuMDYpIiBzdHJva2U9InJnYmEoMjIwLDE4MCw2MCwwLjI1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iNTUzIiB5PSIzNzUiIGNsYXNzPSJub2RlIj50eXBlcy50czwvdGV4dD4KICA8dGV4dCB4PSI1NTMiIHk9IjM4NSIgY2xhc3M9Im5vZGUtc3ViIj5hbGwgZW51bXMgKyBpbnRlcmZhY2VzPC90ZXh0PgoKICA8IS0tIGRhdGEgd2lyZXMgdXAgdG8gZ2FtZXBsYXkgLS0+CiAgPGxpbmUgeDE9IjczIiAgeTE9IjM2MiIgeDI9IjU2MiIgeTI9IjMzNiIgY2xhc3M9IndpcmUiIHN0cm9rZS1kYXNoYXJyYXk9IjIsNCIgb3BhY2l0eT0iMC41Ii8+CiAgPGxpbmUgeDE9IjE5MyIgeTE9IjM2MiIgeDI9IjU2MiIgeTI9IjMzNiIgY2xhc3M9IndpcmUiIHN0cm9rZS1kYXNoYXJyYXk9IjIsNCIgb3BhY2l0eT0iMC41Ii8+CiAgPGxpbmUgeDE9IjMxMyIgeTE9IjM2MiIgeDI9IjQ2NCIgeTI9IjI4MiIgY2xhc3M9IndpcmUiIHN0cm9rZS1kYXNoYXJyYXk9IjIsNCIgb3BhY2l0eT0iMC41Ii8+CgogIDwhLS0gbGVnZW5kIC0tPgogIDxsaW5lIHgxPSI1ODAiIHkxPSI0MjAiIHgyPSI2MTAiIHkyPSI0MjAiIHN0cm9rZT0icmdiYSg4NCwyMzAsMTY0LDAuNSkiIHN0cm9rZS13aWR0aD0iMS4yIi8+CiAgPHRleHQgeD0iNjE1IiB5PSI0MjMiIGNsYXNzPSJub2RlLXN1YiIgc3R5bGU9InRleHQtYW5jaG9yOnN0YXJ0OyI+ZGlyZWN0IGRlcGVuZGVuY3k8L3RleHQ+CiAgPGxpbmUgeDE9IjU4MCIgeTE9IjQzNiIgeDI9IjYxMCIgeTI9IjQzNiIgc3Ryb2tlPSJyZ2JhKDg0LDIzMCwxNjQsMC4xOCkiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iMywzIi8+CiAgPHRleHQgeD0iNjE1IiB5PSI0MzkiIGNsYXNzPSJub2RlLXN1YiIgc3R5bGU9InRleHQtYW5jaG9yOnN0YXJ0OyI+ZGF0YSByZWZlcmVuY2U8L3RleHQ+Cjwvc3ZnPg==" width="760" alt="diagram" style="max-width:100%"/>
+</p>
+
+---
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| Language | TypeScript 5.3 |
+| 3D engine | Three.js r160 |
+| Build | `tsc` → static dist |
+| Deploy | Vercel (static build) |
+| Backend | None — fully browser |
+| Audio | Web Audio API (procedural, zero files) |
+| Persistence | `localStorage` |
+
+---
+
+## Project Structure
+
+```
+drifter-s-tale/
+├── menu.html                  # Cinematic entry point — opens without build step
+├── index.html                 # Direct play entry
+├── package.json
+├── tsconfig.json
+├── vercel.json
+│
+├── src/
+│   ├── types.ts               # All enums + interfaces (WeatherType, WrongnessState, Zone…)
+│   ├── worldgen.ts            # Procedural zone generator — 6 zones, seeded RNG
+│   ├── utils.ts               # RNG, ID gen, noise helpers
+│   ├── index.ts               # Public exports
+│   │
+│   ├── render/
+│   │   ├── SkySystem.ts       # 9 wrongness states, Moon, Obsedia Rain, day/night cycle
+│   │   ├── PixelPipeline.ts   # 384×216 internal render → upscale
+│   │   ├── IsometricRenderer.ts   # Orchestrates all render systems
+│   │   ├── LightingController.ts  # Key light, fill light, ambient
+│   │   ├── GodRayLayer.ts         # GPU crepuscular rays (GPU Gems approach, 48 samples)
+│   │   ├── RainSystem.ts          # GPU point-sprite rain + Obsedia black rain + splashes
+│   │   ├── DustParticles.ts       # Ambient scatter — suppressed during rain
+│   │   ├── AtmosphereController.ts  # CSS lens overlays (vignette, scanlines, wet lens)
+│   │   ├── IsoTileMap.ts          # Isometric tile geometry
+│   │   ├── SVGBuildingFactory.ts  # Procedural SVG building generation
+│   │   ├── SVGRasterizer.ts       # SVG → Three.js texture
+│   │   ├── SpriteAnimator.ts      # 8-direction Drifter sprite
+│   │   └── TextureCache.ts        # LRU cache, GPU eviction on zone unload
+│   │
+│   ├── gameplay/
+│   │   ├── GameplayEngine.ts      # Composition root — wires all gameplay systems
+│   │   ├── DrifterEntity.ts       # Player entity — stats, state, roster slot
+│   │   ├── DrifterRoster.ts       # Roster persistence — permadeath-aware
+│   │   ├── MovementController.ts  # WASD + virtual joystick input → movement
+│   │   ├── HuskSystem.ts          # Patrol + escalation AI, per-zone population
+│   │   ├── ThreatModel.ts         # Detection radius — sight/sound/vibration per type
+│   │   ├── InteractionSystem.ts   # E-key proximity interact
+│   │   ├── CatalogSystem.ts       # Discovery logbook — pulls from fact_pools + husk_records
+│   │   ├── InventorySystem.ts     # Items, consumables, currency origin
+│   │   ├── WorldInfoLayer.ts      # Cross-run logbook — localStorage-backed
+│   │   ├── RunManager.ts          # Permadeath, roster persistence, run lifecycle
+│   │   └── ZoneStreamer.ts        # 3×3 zone window, load/unload with onLoad/onUnload callbacks
+│   │
+│   ├── data/
+│   │   ├── husk_records.ts        # 23 threat types (9 Husks, 5 Infected, 1 Ghuul) — survivor POV only
+│   │   ├── fact_pools.ts          # 240+ discoverable lore entries, 7 pools
+│   │   └── relay_station.json     # WNCORE Relay Station 7, Dhaka — hand-authored zone
+│   │
+│   └── ui/
+│       ├── home-screen.ts         # Full AppMode state machine — menu, briefing, play, settings
+│       └── GameRuntime.ts         # Three.js tick loop, input, world map, mobile touch controls
+│
+└── assets/
+    ├── characters/            # Drifter sprites (8-direction)
+    ├── tiles/                 # Isometric tile sheets
+    ├── buildings/             # Building reference art
+    ├── audio/                 # Placeholder folders (sfx, music, voice)
+    │   ├── music/ambient/
+    │   ├── music/tension/
+    │   ├── music/extraction/
+    │   ├── sfx/footsteps/
+    │   ├── sfx/hazard/
+    │   ├── sfx/radio/
+    │   └── sfx/ui/
+    └── ui/
+```
+
+---
+
+## Getting Started
+
+**Requires:** Node.js 18+, a GitHub Codespace or any terminal.
+
+```bash
+# Install
+npm install
+
+# Type check (no emit)
+npm run type-check
+
+# Build to dist/
+npm run build
+
+# Watch mode
+npm run dev
+```
+
+Open `menu.html` directly in a browser for the cinematic shell with no build step.
+
+Deploy: push to GitHub, connect to Vercel. The `vercel.json` + `package.json` `vercel-build` script handles everything.
+
+---
+
+## Gameplay Loop
+
+```
+ROSTER DRAW → ZONE GEN → PRE-RUN BRIEF → DEPLOY → EXPLORE → EXTRACT
+     ↑                                                           |
+     └────────────── permadeath · new drifter next run ─────────┘
+```
+
+1. **Roster draw** — a Drifter is pulled from the procedural faction logbook. Name, signal strength, known region.
+2. **Zone generation** — deterministic seeded worldgen builds the zone. Wrongness state assigned per zone, not globally.
+3. **Pre-run brief** — sky state, threat count, field intel lines. Survivor voice, no mechanical spoilers.
+4. **Explore** — WASD/virtual joystick. `E` to interact and catalog. `M` for survey map.
+5. **Extract** — reach the extraction point before signal drops. The logbook entry is written either way.
+
+---
+
+## Lore Notes for Contributors
+
+- **The mechanism behind Husks is an end-game spoiler.** All player-facing text must use survivor-POV behavioral observation only. No references to psychological rejection of reality, veil failure, or the actual cause. Observable traits only — how they move, what they respond to, what survivors have noted.
+- **The Moon is a plot anchor.** It has phase, position, and anomaly state (`Moon Dome`, `Moon Dwellers`, shining anomalies). Treat it as a persistent trackable element, not ambient lighting.
+- **Wrongness is zone-specific, not global.** Different zones carry different states simultaneously. Severity follows an intentional zone progression curve — do not randomize freely.
+- **Obsedia Rain is its own named state.** Not a weather effect. Not a visual filter. Its own system entry.
+- **6 months post-collapse** — the sky range in DRIFTER is GREY through STORMY. Not the full Sunny→Another Sky range. Zone progression: Finland first (grounded), Nepal last (severe, outbreak origin, red sky).
+
+---
+
+## Universe
+
+DRIFTER'S TALE is part of the **Cygnus Signal Series** — an original post-apocalyptic fiction universe built around two texts:
+
+- *Another Sky* (novel, 2032 in-universe) — Som's POV. The reader's POV throughout.
+- *Simulunas* (short story, 2048 in-universe)
+
+The public ARG layer lives at [wncore-radio.vercel.app](https://wncore-radio.vercel.app) — a radio aggregator platform with layered horror exposure. The deeper archive is at [siharu.vercel.app](https://siharu.vercel.app).
+
+---
+
+```
+ > RELAY NODE 07-DHK · SIGNAL HOLDING
+ > DRIFTER DEPLOYED
+ > LOGBOOK OPEN
+ > _
+```

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drifter's Tale</title>
+  <link rel="icon" type="image/png" href="./assets/drfiter.png" />
+  <meta name="description" content="Drifter Engine — a procedural investigation-survival RPG interface with atmospheric relay station presentation." />
+  <meta name="theme-color" content="#07101f" />
+  <meta property="og:title" content="Drifter Engine" />
+  <meta property="og:description" content="Explore a relay station interface for the Drifter universe with atmospheric menu and gameplay placeholder support." />
+  <meta property="og:image" content="./assets/drfiter.png" />
+  <meta property="og:type" content="website" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #111;
+      color: #eee;
+      font-family: system-ui, sans-serif;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin: 0.4rem 0;
+      line-height: 1.5;
+    }
+
+    a {
+      color: #7ee;
+    }
+  </style>
+</head>
+<body>
+    <div id="app"></div>
+    <script type="module" src="./dist/ui/home-screen.js"></script>
+  </body>

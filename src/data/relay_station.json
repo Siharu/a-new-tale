@@ -1,0 +1,419 @@
+{
+  "metadata": {
+    "name": "Relay Station 7 — Dhaka Relay",
+    "region": "Bangladesh",
+    "era": "Peak Decay",
+    "difficulty": 5,
+    "timeOfDay": 23.78,
+    "wrongnessState": "RAINY",
+    "weatherState": "OVERCAST",
+    "description": "WNCORE Relay Station 7, primary relay hub for South Asian signal distribution. Strategic location near Dhaka. Last known functional relay before regional collapse. Noire packs active in surrounding zones at night.",
+    "createdAt": "2032-06-15",
+    "designNotes": "Hand-authored first playable zone. Mood board: late-night relay station with operational radio equipment, administrative floors, living quarters. Noire Husks (2-3 groups) appropriate for 23:47 time. No Fog of Medusa (Germany only). Rain of Obsedia possible."
+  },
+  "world": {
+    "seed": 42,
+    "zones": [
+      {
+        "id": "zone-relay-7",
+        "name": "Relay Station 7 Compound",
+        "type": "SIGNAL_HUB",
+        "position": { "x": 256, "y": 256 },
+        "size": { "width": 2048, "height": 2048 },
+        "seed": 12345,
+        "timeOfDay": 23.78,
+        "weatherState": "OVERCAST",
+        "fogIntensity": 0.0,
+        "decayLevel": 0.6,
+        "wrongnessState": "RAINY",
+        "region": "Bangladesh",
+        "buildings": [
+          {
+            "id": "building-relay-main",
+            "name": "Main Relay Tower & Operations",
+            "type": "SIGNAL_TOWER",
+            "position": { "x": 400, "y": 400 },
+            "size": { "width": 120, "height": 120 },
+            "seed": 11111,
+            "decayState": 0.4,
+            "exploredState": 0,
+            "rooms": [
+              {
+                "id": "room-ops-ground",
+                "name": "Operations Floor (Ground)",
+                "position": { "x": 0, "y": 0 },
+                "size": { "width": 100, "height": 80 },
+                "type": "RADIO_STATION",
+                "decayState": 0.3,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-ops-log",
+                    "name": "Operations Log Book",
+                    "description": "Official WNCORE relay operations log. Last entry dated 147 days ago. Handwritten observations of signal degradation and threat movement.",
+                    "iconIndex": 5,
+                    "isWeapon": false,
+                    "value": 150,
+                    "weight": 0.8,
+                    "position": { "x": 30, "y": 20 }
+                  },
+                  {
+                    "id": "item-radio-freq-list",
+                    "name": "Radio Frequency Directory",
+                    "description": "Printed list of active WNCORE relay frequencies across regions. Some marked with X (non-functional). Useful for navigation.",
+                    "iconIndex": 12,
+                    "isWeapon": false,
+                    "value": 200,
+                    "weight": 0.3,
+                    "position": { "x": 50, "y": 30 }
+                  },
+                  {
+                    "id": "item-wncore-memo",
+                    "name": "WNCORE Internal Memo",
+                    "description": "Classified memo regarding Ghuul tracking protocol and non-engagement orders. Details location of 6 known Ghuuls in regional territory.",
+                    "iconIndex": 8,
+                    "isWeapon": false,
+                    "value": 300,
+                    "weight": 0.2,
+                    "position": { "x": 60, "y": 50 }
+                  }
+                ],
+                "hazards": []
+              },
+              {
+                "id": "room-ops-server",
+                "name": "Server Room (B1)",
+                "position": { "x": 0, "y": 1 },
+                "size": { "width": 50, "height": 60 },
+                "type": "SERVER_ROOM",
+                "decayState": 0.5,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-backup-drives",
+                    "name": "Backup Server Drives (×3)",
+                    "description": "Sealed data storage. Signal patterns and regional threat coordinates stored. Probably worthless without power, but valuable for research.",
+                    "iconIndex": 15,
+                    "isWeapon": false,
+                    "value": 400,
+                    "weight": 1.2,
+                    "position": { "x": 20, "y": 30 }
+                  }
+                ],
+                "hazards": [
+                  {
+                    "id": "hazard-server-decay",
+                    "type": "STRUCTURAL_DECAY",
+                    "position": { "x": 25, "y": 25 },
+                    "radius": 30,
+                    "intensity": 0.4,
+                    "spawnTime": 0,
+                    "maxIntensity": 0.6,
+                    "rampSpeed": 0.1,
+                    "zoneID": "zone-relay-7",
+                    "buildingID": "building-relay-main"
+                  }
+                ]
+              },
+              {
+                "id": "room-ops-living-quarters",
+                "name": "Living Quarters (2nd Floor)",
+                "position": { "x": 1, "y": 0 },
+                "size": { "width": 80, "height": 100 },
+                "type": "LIVING_QUARTERS",
+                "decayState": 0.7,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-personnel-manifest",
+                    "name": "Personnel Manifest",
+                    "description": "List of 47 staff stationed at Relay 7. All names crossed out except three (last survivors?). Their fates unknown.",
+                    "iconIndex": 9,
+                    "isWeapon": false,
+                    "value": 100,
+                    "weight": 0.3,
+                    "position": { "x": 40, "y": 50 }
+                  },
+                  {
+                    "id": "item-personal-letter",
+                    "name": "Unfinished Letter",
+                    "description": "Handwritten letter, never sent. Addressed to 'Anne.' Mentions missing four years (the Blank Zone). Mentions wanting environmental work. Mentions anime.",
+                    "iconIndex": 7,
+                    "isWeapon": false,
+                    "value": 50,
+                    "weight": 0.1,
+                    "position": { "x": 30, "y": 70 }
+                  },
+                  {
+                    "id": "item-crowbar",
+                    "name": "Crowbar",
+                    "description": "Standard-issue relay maintenance tool. Useful for prying open doors and light melee defense.",
+                    "iconIndex": 20,
+                    "isWeapon": true,
+                    "damage": 6,
+                    "position": { "x": 20, "y": 40 }
+                  }
+                ],
+                "hazards": []
+              }
+            ],
+            "hazards": []
+          },
+          {
+            "id": "building-relay-admin",
+            "name": "Administrative Building",
+            "type": "RADIO_STATION",
+            "position": { "x": 600, "y": 350 },
+            "size": { "width": 100, "height": 100 },
+            "seed": 22222,
+            "decayState": 0.5,
+            "exploredState": 0,
+            "rooms": [
+              {
+                "id": "room-admin-office",
+                "name": "Director's Office",
+                "position": { "x": 0, "y": 0 },
+                "size": { "width": 60, "height": 60 },
+                "type": "OFFICE",
+                "decayState": 0.4,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-director-log",
+                    "name": "Director's Personal Log",
+                    "description": "Encrypted journal. Decryption key not found. Last readable entries: 'outbreak spreading faster than expected. Cannot evacuate. Standing post until relief. Standing post until... [unintelligible handwriting]'",
+                    "iconIndex": 6,
+                    "isWeapon": false,
+                    "value": 250,
+                    "weight": 0.4,
+                    "position": { "x": 30, "y": 30 }
+                  },
+                  {
+                    "id": "item-evacuation-papers",
+                    "name": "Evacuation Orders (Classified)",
+                    "description": "Order stamped 'REJECTED.' Director was ordered to evacuate. Rejected the order. Chose to maintain the relay station.",
+                    "iconIndex": 10,
+                    "isWeapon": false,
+                    "value": 175,
+                    "weight": 0.2,
+                    "position": { "x": 45, "y": 40 }
+                  }
+                ],
+                "hazards": []
+              },
+              {
+                "id": "room-admin-storage",
+                "name": "Supply Storage",
+                "position": { "x": 1, "y": 0 },
+                "size": { "width": 40, "height": 50 },
+                "type": "STORAGE",
+                "decayState": 0.3,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-medical-kit",
+                    "name": "Medical Supply Kit (×2)",
+                    "description": "Standard relay medical supplies. Antibiotics, bandages, pain medication. Some doses expired but likely still effective.",
+                    "iconIndex": 18,
+                    "isWeapon": false,
+                    "value": 200,
+                    "weight": 1.5,
+                    "position": { "x": 15, "y": 20 }
+                  },
+                  {
+                    "id": "item-food-rations",
+                    "name": "Emergency Ration Boxes (×5)",
+                    "description": "Long-shelf-life survival rations. 3000 calories per box. Tasteless but nutritious.",
+                    "iconIndex": 19,
+                    "isWeapon": false,
+                    "value": 300,
+                    "weight": 5.0,
+                    "position": { "x": 25, "y": 35 }
+                  }
+                ],
+                "hazards": []
+              }
+            ],
+            "hazards": []
+          },
+          {
+            "id": "building-relay-residential",
+            "name": "Residential Barracks",
+            "type": "RESIDENTIAL",
+            "position": { "x": 700, "y": 550 },
+            "size": { "width": 140, "height": 110 },
+            "seed": 33333,
+            "decayState": 0.6,
+            "exploredState": 0,
+            "rooms": [
+              {
+                "id": "room-residential-dorm-a",
+                "name": "Dormitory Wing A",
+                "position": { "x": 0, "y": 0 },
+                "size": { "width": 70, "height": 55 },
+                "type": "LIVING_QUARTERS",
+                "decayState": 0.7,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-dorm-manifesto",
+                    "name": "Scrawled Manifesto (Wall Writings)",
+                    "description": "Words carved into wall: 'The veil is breaking. I can see. I can see what they hid. We all see now. Join us.' Possibly pre-transformation writings.",
+                    "iconIndex": 11,
+                    "isWeapon": false,
+                    "value": 100,
+                    "weight": 0.0,
+                    "position": { "x": 30, "y": 25 }
+                  },
+                  {
+                    "id": "item-survivor-journal",
+                    "name": "Survivor Journal — Last Days",
+                    "description": "Final entries: 'April 7: Outbreak started. April 14: Director ordering isolation. May 2: No contact from other relays. May 15: Someone is at the fence. White hair. Won't stop watching. June 2: They're getting in. We're getting out. Going dark.' Ends abruptly.",
+                    "iconIndex": 6,
+                    "isWeapon": false,
+                    "value": 150,
+                    "weight": 0.3,
+                    "position": { "x": 50, "y": 40 }
+                  }
+                ],
+                "hazards": []
+              }
+            ],
+            "hazards": []
+          },
+          {
+            "id": "building-relay-fence",
+            "name": "Perimeter Fence & Guard Post",
+            "type": "MAINTENANCE",
+            "position": { "x": 350, "y": 600 },
+            "size": { "width": 80, "height": 80 },
+            "seed": 44444,
+            "decayState": 0.8,
+            "exploredState": 0,
+            "rooms": [
+              {
+                "id": "room-fence-guard",
+                "name": "Guard Post (Gate)",
+                "position": { "x": 0, "y": 0 },
+                "size": { "width": 60, "height": 60 },
+                "type": "HALLWAY",
+                "decayState": 0.8,
+                "exploredState": 0,
+                "items": [
+                  {
+                    "id": "item-guard-rifle",
+                    "name": "Guard Rifle (Ammunition: 8 rounds)",
+                    "description": "Standard-issue relay security weapon. Well-maintained. Ammo limited. Last guard post holder may have used it.",
+                    "iconIndex": 21,
+                    "isWeapon": true,
+                    "damage": 12,
+                    "position": { "x": 20, "y": 30 }
+                  },
+                  {
+                    "id": "item-gate-key",
+                    "name": "Gate Key Ring",
+                    "description": "Multiple keys. One opens main perimeter gate. Others unlock storage facilities. Key labels faded.",
+                    "iconIndex": 17,
+                    "isWeapon": false,
+                    "value": 50,
+                    "weight": 0.2,
+                    "position": { "x": 40, "y": 30 }
+                  },
+                  {
+                    "id": "item-breach-evidence",
+                    "name": "Evidence of Breach",
+                    "description": "Scratch marks on fence. Claw damage. Blood (black bloated residue — Infected trait?). Fence was breached from outside. Multiple attempted entry points.",
+                    "iconIndex": 0,
+                    "isWeapon": false,
+                    "value": 0,
+                    "weight": 0.0,
+                    "position": { "x": 35, "y": 45 }
+                  }
+                ],
+                "hazards": [
+                  {
+                    "id": "hazard-fence-breach",
+                    "type": "STRUCTURAL_DECAY",
+                    "position": { "x": 50, "y": 50 },
+                    "radius": 40,
+                    "intensity": 0.7,
+                    "spawnTime": 0,
+                    "maxIntensity": 0.9,
+                    "rampSpeed": 0.05,
+                    "zoneID": "zone-relay-7",
+                    "buildingID": "building-relay-fence"
+                  }
+                ]
+              }
+            ],
+            "hazards": []
+          }
+        ],
+        "hazards": [
+          {
+            "id": "hazard-noire-pack-1",
+            "type": "HUSK_NEST",
+            "position": { "x": 500, "y": 500 },
+            "radius": 300,
+            "intensity": 0.8,
+            "spawnTime": 0,
+            "maxIntensity": 1.0,
+            "rampSpeed": 0.2,
+            "zoneID": "zone-relay-7",
+            "buildingID": null
+          },
+          {
+            "id": "hazard-noire-pack-2",
+            "type": "HUSK_NEST",
+            "position": { "x": 800, "y": 300 },
+            "radius": 250,
+            "intensity": 0.7,
+            "spawnTime": 0,
+            "maxIntensity": 1.0,
+            "rampSpeed": 0.2,
+            "zoneID": "zone-relay-7",
+            "buildingID": null
+          },
+          {
+            "id": "hazard-structural-collapse",
+            "type": "STRUCTURAL_DECAY",
+            "position": { "x": 700, "y": 700 },
+            "radius": 150,
+            "intensity": 0.5,
+            "spawnTime": 0,
+            "maxIntensity": 0.8,
+            "rampSpeed": 0.1,
+            "zoneID": "zone-relay-7",
+            "buildingID": null
+          }
+        ],
+        "items": [],
+        "storyHooks": [
+          {
+            "id": "hook-radio-message",
+            "name": "Final Broadcast Loop",
+            "description": "Radio in Operations still broadcasting. Same message on loop every 6 hours: 'WNCORE Relay Station 7, South Asia. Emergency broadcast: Survivors in this region, seek nearest relay. All stations operational. Transmitting on standard frequencies. Do not approach if infected symptoms present. Stay tuned for updates.' — Last broadcast date: 147 days ago.",
+            "linkedEntry": "entry-broadcast-final",
+            "position": { "x": 400, "y": 400 },
+            "buildingID": "building-relay-main",
+            "discoveryCondition": "PROXIMITY"
+          },
+          {
+            "id": "hook-director-decision",
+            "name": "Director's Choice",
+            "description": "Personal log + evacuation orders reveal a story: Director was ordered to evacuate. Refused. Stayed to maintain the relay station. Last known entry suggests they remained at post until the end.",
+            "linkedEntry": "entry-director-sacrifice",
+            "position": { "x": 600, "y": 350 },
+            "buildingID": "building-relay-admin",
+            "discoveryCondition": "INVESTIGATION"
+          }
+        ],
+        "hqEntrance": {
+          "position": { "x": 400, "y": 400 },
+          "interactable": true
+        }
+      }
+    ],
+    "hqPosition": { "x": 256, "y": 256 }
+  }
+}

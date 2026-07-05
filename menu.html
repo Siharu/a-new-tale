@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drifter's Tale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=VT323&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #c0392b;
+      --red-glow: rgba(192, 57, 43, 0.6);
+      --off-white: #d8dce2;
+      --dim: #7a8590;
+      --dimmer: #4a5560;
+      --panel-w: 340px;
+    }
+
+    html, body {
+      
+      width: 100%; height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--off-white);
+    }
+
+    /* ── Background image ── */
+    #bg {
+      position: fixed; inset: 0;
+      background-image: url('./assets/wncorelastbastion.png');
+      background-size: cover;
+      background-position: center center;
+      /* slight dark tint so text reads cleanly */
+      filter: brightness(0.72) contrast(1.05);
+      z-index: 0;
+    }
+
+    /* ── Rain canvas ── */
+    #rain-canvas {
+      position: fixed; inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── Lightning flash overlay ── */
+    #lightning {
+      position: fixed; inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: rgba(200, 220, 255, 0);
+      transition: background 0.04s ease;
+    }
+
+    /* ── SVG effects layer (blinking dot, rain streaks on top) ── */
+    #svg-overlay {
+      position: fixed; inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* ── Left gradient fade so panel text reads ── */
+    #left-fade {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 540px;
+      background: linear-gradient(
+        to right,
+        rgba(0,0,0,0.88) 0%,
+        rgba(0,0,0,0.72) 40%,
+        rgba(0,0,0,0.0) 100%
+      );
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    /* ── Left edge accent line ── */
+    #edge-line {
+      position: fixed;
+      top: 0; left: var(--panel-w);
+      width: 1px; height: 100%;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(255,255,255,0.06) 20%,
+        rgba(255,255,255,0.06) 80%,
+        transparent 100%
+      );
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* ── Scanlines ── */
+    #scanlines {
+      position: fixed; inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 2px,
+        rgba(0,0,0,0.055) 2px, rgba(0,0,0,0.055) 3px
+      );
+    }
+
+    /* ── Noise flicker ── */
+    #noise {
+      position: fixed; inset: 0;
+      z-index: 7;
+      pointer-events: none;
+      opacity: 0.025;
+      image-rendering: pixelated;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      pointer-events: auto;
+      background: transparent;
+    }
+
+    /* ── UI panel ── */
+    #panel {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: var(--panel-w);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 44px 36px 48px 40px;
+    }
+
+    /* Title block */
+    .title-eyebrow {
+      font-family: 'VT323', 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.32em;
+      color: var(--dimmer);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .title-block {
+      position: relative;
+    }
+    .title-main {
+      font-family: 'Rubik Glitch', 'Rajdhani', sans-serif;
+      font-size: 3.2rem;
+      font-weight: 400;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      line-height: 0.95;
+      color: #f3f7ff;
+      text-shadow: 0 0 18px rgba(255,255,255,0.08);
+      opacity: 0.95;
+    }
+    .title-glitch {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', 'Share Tech Mono', monospace;
+      font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+      font-weight: 400;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 12px rgba(255,255,255,0.35), 0 0 18px rgba(255,60,60,0.2);
+      opacity: 0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      transform: translateY(6px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .title-glitch.active {
+      opacity: 1;
+      transform: translateY(0);
+      animation: title-glitch 0.35s steps(2, end) 1;
+    }
+    .title-sub {
+      font-family: 'Rubik Glitch', 'Rajdhani', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: rgba(216,220,226,0.83);
+      margin-top: 8px;
+      opacity: 0.9;
+    }
+
+    /* Station stats */
+    .stats-block {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .stat-row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .stat-label { color: var(--dimmer); font-family: 'VT323', 'Share Tech Mono', monospace; }
+    .stat-value { color: var(--off-white); font-family: 'VT323', 'Share Tech Mono', monospace; }
+    .signal-bar {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .signal-bar-inner {
+      display: flex; gap: 3px; align-items: center;
+    }
+    .signal-bar-inner span {
+      display: block;
+      width: 14px; height: 2px;
+      background: var(--dim);
+      opacity: 0.35;
+      transform-origin: center;
+      animation: signal-bar-flicker 1.1s ease-in-out infinite;
+      animation-delay: calc(var(--bar-index, 0) * 0.08s);
+    }
+    .signal-bar-inner span.active {
+      background: var(--off-white);
+      box-shadow: 0 0 8px rgba(255,255,255,0.24);
+      opacity: 1;
+      animation: signal-bar-pulse 0.95s ease-in-out infinite;
+    }
+    .signal-tri {
+      width: 0; height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 6px solid var(--dim);
+      margin-left: 2px;
+      animation: signal-tri-pulse 1.2s ease-in-out infinite;
+    }
+
+    /* Nav */
+    .nav-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 0 8px 0;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      text-align: left;
+      position: relative;
+      transition: color 0.12s;
+      outline: none;
+    }
+    .nav-item .nav-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--off-white);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: color 0.12s, letter-spacing 0.12s;
+    }
+    .nav-item .nav-desc {
+      font-family: 'VT323', 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      color: var(--dimmer);
+      margin-top: 2px;
+      padding-left: 22px;
+      display: none;
+    }
+    .nav-item.active .nav-label,
+    .nav-item:hover .nav-label {
+      color: #ffffff;
+      letter-spacing: 0.28em;
+    }
+    .nav-item.active .nav-desc,
+    .nav-item:hover .nav-desc {
+      display: block;
+    }
+    /* selection marker */
+    .nav-marker {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border: 1px solid var(--dimmer);
+      background: transparent;
+      flex-shrink: 0;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .nav-item.active .nav-marker,
+    .nav-item:hover .nav-marker {
+      background: var(--off-white);
+      border-color: var(--off-white);
+    }
+
+    #dialog-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.74);
+      padding: 28px;
+    }
+    .dialog-card {
+      width: min(640px, calc(100% - 64px));
+      background: rgba(11, 16, 22, 0.96);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 80px rgba(0,0,0,0.54);
+      border-radius: 28px;
+      padding: 28px 28px 22px;
+    }
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+    }
+    .dialog-title {
+      margin: 0;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .dialog-description {
+      margin: 12px 0 0;
+      color: var(--off-white);
+      line-height: 1.6;
+      max-width: 32rem;
+      font-size: 0.95rem;
+    }
+    .dialog-close {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: transparent;
+      color: var(--off-white);
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      font-size: 1.35rem;
+      cursor: pointer;
+      transition: background 0.12s, transform 0.12s;
+    }
+    .dialog-close:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+
+    /* Bottom block */
+    .bottom-block {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .tagline {
+      font-family: 'VT323', 'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dimmer);
+      line-height: 1.65;
+    }
+    .morse {
+      font-family: 'VT323', 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--dimmer);
+      opacity: 0.6;
+    }
+
+    /* ── Animations ── */
+    @keyframes blink-red {
+      0%, 45%   { opacity: 1; }
+      50%, 95%  { opacity: 0.08; }
+      100%      { opacity: 1; }
+    }
+    @keyframes blink-glow {
+      0%, 45%   { opacity: 0.7; r: 7px; }
+      50%, 95%  { opacity: 0; r: 2px; }
+      100%      { opacity: 0.7; r: 7px; }
+    }
+    @keyframes title-glitch {
+      0%, 100% { text-shadow: 0 0 16px rgba(255,255,255,0.45), 0 0 28px rgba(255,60,60,0.22); transform: translate(0, 0); }
+      20% { text-shadow: -2px 0 0 rgba(255,60,60,0.45), 2px 0 0 rgba(120,220,255,0.35); transform: translate(-1px, 1px); }
+      40% { text-shadow: 2px 0 0 rgba(255,60,60,0.4), -2px 0 0 rgba(120,220,255,0.35); transform: translate(1px, -1px); }
+      60% { text-shadow: -1px 0 0 rgba(255,255,255,0.5), 1px 0 0 rgba(255,60,60,0.3); transform: translate(-1px, 0); }
+      80% { text-shadow: 1px 0 0 rgba(120,220,255,0.4), -1px 0 0 rgba(255,60,60,0.3); transform: translate(1px, 0); }
+    }
+    @keyframes signal-bar-flicker {
+      0%, 100% { transform: scaleY(0.75); opacity: 0.22; }
+      50% { transform: scaleY(1.1); opacity: 0.72; }
+    }
+    @keyframes signal-bar-pulse {
+      0%, 100% { transform: scaleY(0.95); opacity: 0.8; }
+      50% { transform: scaleY(1.25); opacity: 1; }
+    }
+    @keyframes signal-tri-pulse {
+      0%, 100% { opacity: 0.55; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(1px); }
+    }
+
+    /* Active menu state class */
+    .nav-item.disabled .nav-label { color: var(--dimmer); opacity: 0.5; cursor: not-allowed; }
+
+    @media (max-width: 900px) {
+      :root { --panel-w: min(100%, 420px); }
+      body { overflow-y: auto; overflow-x: hidden; }
+      #panel {
+        position: absolute;
+        inset: 0;
+        width: min(100%, 420px);
+        max-width: 100%;
+        height: auto;
+        min-height: 100%;
+        padding: 28px 22px 28px;
+        justify-content: flex-start;
+        gap: 22px;
+      }
+      #left-fade {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          rgba(0,0,0,0.9) 0%,
+          rgba(0,0,0,0.74) 55%,
+          rgba(0,0,0,0.2) 100%
+        );
+      }
+      #edge-line { display: none; }
+      .title-main { font-size: clamp(2rem, 8vw, 3rem); }
+      .title-sub { font-size: 0.68rem; letter-spacing: 0.34em; }
+      .stats-block { margin-top: 24px; }
+      .stat-row { grid-template-columns: 92px 1fr; }
+      .nav-item .nav-label { font-size: 0.98rem; letter-spacing: 0.18em; }
+      .nav-item .nav-desc { padding-left: 18px; }
+      .bottom-block { padding-top: 8px; }
+    }
+
+    @media (max-width: 600px) {
+      #panel {
+        width: 100%;
+        padding: 20px 16px 24px;
+        gap: 16px;
+      }
+      #bg { background-position: center 18%; }
+      .title-eyebrow { font-size: 0.5rem; margin-bottom: 8px; }
+      .title-main { font-size: clamp(1.7rem, 10vw, 2.35rem); line-height: 0.96; }
+      .title-glitch { font-size: clamp(0.8rem, 3.6vw, 1rem); }
+      .title-sub { font-size: 0.58rem; letter-spacing: 0.24em; }
+      .stats-block { margin-top: 14px; gap: 4px; }
+      .stat-row { grid-template-columns: 74px 1fr; font-size: 0.56rem; }
+      .nav-block { gap: 6px; }
+      .nav-item {
+        padding: 10px 0;
+        border-radius: 10px;
+        min-height: 44px;
+        justify-content: center;
+      }
+      .nav-item .nav-label { font-size: 0.9rem; letter-spacing: 0.12em; }
+      .nav-item .nav-desc { display: block; padding-left: 16px; font-size: 0.54rem; }
+      .nav-item.active .nav-label,
+      .nav-item:hover .nav-label {
+        letter-spacing: 0.14em;
+      }
+      .tagline { font-size: 0.54rem; }
+      .morse { font-size: 0.54rem; }
+      .dialog-card { width: calc(100% - 24px); padding: 18px; }
+      .dialog-title { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Background -->
+<div id="bg"></div>
+
+<!-- Rain canvas -->
+<canvas id="rain-canvas"></canvas>
+
+<!-- Lightning flash -->
+<div id="lightning"></div>
+
+<!-- SVG overlay: blinking tower dot + vignette details -->
+<svg id="svg-overlay" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tower blink dot — positioned at the red light in the image (~66.1% x, ~28.3% y), calibrated against source pixels -->
+  <g id="signal-network" opacity="0.45">
+    <path class="network-spiral" d="M 24 78 C 50 24, 116 18, 144 44 C 176 74, 170 142, 132 168 C 94 194, 34 184, 18 136" stroke="rgba(255,255,255,0.16)" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-dasharray="280 40">
+      <animate attributeName="stroke-dashoffset" values="280;0;280" dur="8s" repeatCount="indefinite" />
+    </path>
+    <path class="network-spiral" d="M 36 86 C 58 44, 112 38, 136 64 C 162 92, 156 132, 122 148 C 92 162, 54 156, 40 124" stroke="rgba(255,255,255,0.12)" stroke-width="1" fill="none" stroke-linecap="round" stroke-dasharray="220 30">
+      <animate attributeName="stroke-dashoffset" values="220;0;220" dur="6.6s" repeatCount="indefinite" />
+    </path>
+    <circle cx="144" cy="44" r="2.7" fill="rgba(255,255,255,0.7)">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.2s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="132" cy="168" r="2.1" fill="rgba(255,255,255,0.55)">
+      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.8s" repeatCount="indefinite" />
+    </circle>
+  </g>
+  <!-- Outer glow -->
+  <circle id="tower-glow" cx="66.1%" cy="28.3%" r="14" fill="rgba(200,40,30,0.25)">
+    <animate attributeName="r" values="10;18;10" dur="1.8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.35;0;0.35" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Core dot -->
+  <circle id="tower-dot" cx="66.1%" cy="28.3%" r="3.5" fill="#ff2a1a">
+    <animate attributeName="opacity" values="1;0.05;1" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Subtle vignette corners -->
+  <defs>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+      <stop offset="55%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.55)"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="100%" height="100%" fill="url(#vig)"/>
+</svg>
+
+<!-- Left gradient -->
+<div id="left-fade"></div>
+<div id="edge-line"></div>
+
+<!-- Scanlines -->
+<div id="scanlines"></div>
+
+<!-- Noise -->
+<canvas id="noise"></canvas>
+
+<!-- UI Panel -->
+<div id="panel">
+
+  <!-- Title -->
+  <div>
+    <div class="title-block">
+      <div class="title-eyebrow">WNCORE · RELAY STATION 7</div>
+      <div class="title-main">Drifter's</div>
+      <div class="title-sub">Tale</div>
+      <div id="title-glitch" class="title-glitch" aria-hidden="true"></div>
+    </div>
+
+    <!-- Station stats -->
+    <div class="stats-block">
+      <div class="stat-row">
+        <span class="stat-label">Signal Strength</span>
+        <span class="stat-value signal-bar">
+          <span class="signal-bar-inner">
+            <span class="active" style="--bar-index: 0;"></span>
+            <span class="active" style="--bar-index: 1;"></span>
+            <span class="active" style="--bar-index: 2;"></span>
+            <span style="--bar-index: 3;"></span>
+            <span style="--bar-index: 4;"></span>
+          </span>
+          <span class="signal-tri"></span>
+        </span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Station ID</span>
+        <span class="stat-value" id="stat-station">R-23</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Date</span>
+        <span class="stat-value" id="stat-date">02.07.2032</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Time</span>
+        <span class="stat-value" id="stat-time">23:47</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="nav-block" id="main-nav">
+    <button class="nav-item active" data-action="continue">
+      <div class="nav-label"><span class="nav-marker"></span>Continue</div>
+      <div class="nav-desc">Resume your last expedition</div>
+    </button>
+    <button class="nav-item" data-action="new-game">
+      <div class="nav-label"><span class="nav-marker"></span>New Game</div>
+      <div class="nav-desc">Begin a fresh run</div>
+    </button>
+    <button class="nav-item" data-action="expedition">
+      <div class="nav-label"><span class="nav-marker"></span>Expedition</div>
+      <div class="nav-desc">Roguelite survival run</div>
+    </button>
+    <button class="nav-item" data-action="archives">
+      <div class="nav-label"><span class="nav-marker"></span>Archives</div>
+      <div class="nav-desc">Drifter logs &amp; catalog</div>
+    </button>
+    <button class="nav-item" data-action="settings">
+      <div class="nav-label"><span class="nav-marker"></span>Settings</div>
+      <div class="nav-desc">Relay configuration</div>
+    </button>
+    <button class="nav-item" data-action="credits">
+      <div class="nav-label"><span class="nav-marker"></span>Credits</div>
+    </button>
+    <button class="nav-item disabled" data-action="quit" style="margin-top:8px;">
+      <div class="nav-label"><span class="nav-marker"></span>Quit</div>
+    </button>
+  </nav>
+
+  <div id="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-body">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <h2 class="dialog-title" id="dialog-title">Panel</h2>
+          <p class="dialog-description" id="dialog-body">Select an option to continue.</p>
+        </div>
+        <button id="dialog-close" class="dialog-close" type="button" aria-label="Close panel">×</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="bottom-block">
+    <div class="tagline">The signal is weak,<br>but it's still calling.</div>
+    <div class="morse" id="morse-line">— — · — — —</div>
+  </div>
+</div>
+
+<script type="module">
+window.__DRIFTER_NO_AUTO_INIT__ = true;
+let realGameApp = null;
+let realGameReady = false;
+
+const appLoader = import('./dist/ui/home-screen.js')
+  .then(mod => {
+    const HomeScreen = mod.HomeScreen;
+    if (!HomeScreen) {
+      console.error('HomeScreen module did not export HomeScreen');
+      return;
+    }
+    realGameApp = new HomeScreen('app');
+    realGameReady = true;
+    const appEl = document.getElementById('app');
+    if (appEl) appEl.style.display = 'none';
+  })
+  .catch(err => {
+    console.error('Failed to load HomeScreen module', err);
+  });
+
+function showGameApp() {
+  const appEl = document.getElementById('app');
+  const panelEl = document.getElementById('panel');
+  if (appEl) appEl.style.display = 'block';
+  if (panelEl) panelEl.style.display = 'none';
+}
+
+function showEngineLoading() {
+  let el = document.getElementById('engine-loading-toast');
+  if (el) return;
+  el = document.createElement('div');
+  el.id = 'engine-loading-toast';
+  el.style.cssText = `
+    position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+    padding:10px 22px;background:rgba(4,8,15,0.92);
+    border:1px solid rgba(84,230,164,0.35);
+    font-family:'Share Tech Mono',monospace;font-size:0.64rem;
+    letter-spacing:0.2em;text-transform:uppercase;
+    color:rgba(84,230,164,0.8);z-index:99;
+    pointer-events:none;
+  `;
+  el.textContent = 'WNCORE · INITIALISING ENGINE…';
+  document.body.appendChild(el);
+  // auto-remove after engine is ready or 6s
+  const check = setInterval(() => {
+    if (realGameReady) { el.remove(); clearInterval(check); }
+  }, 200);
+  setTimeout(() => { el?.remove(); clearInterval(check); }, 6000);
+}
+
+async function startGame(mode) {
+  if (!realGameReady) {
+    showEngineLoading();
+    // Wait up to 8s for engine to be ready, then proceed
+    await new Promise(resolve => {
+      const poll = setInterval(() => {
+        if (realGameReady) { clearInterval(poll); resolve(); }
+      }, 100);
+      setTimeout(() => { clearInterval(poll); resolve(); }, 8000);
+    });
+    if (!realGameReady) return; // gave up
+  }
+  showGameApp();
+  if (mode === 'story') {
+    await realGameApp.launchStory();
+  } else {
+    await realGameApp.launchExploration();
+  }
+}
+
+function openGameSettings() {
+  if (!realGameReady) {
+    alert('Loading game engine, please wait...');
+    return;
+  }
+  showGameApp();
+  realGameApp.showSettings();
+}
+
+// ── Tick clock ────────────────────────────────────────────────────────────────
+(function tickClock() {
+  const dateEl = document.getElementById('stat-date');
+  const timeEl = document.getElementById('stat-time');
+
+  function getMenuDateTime() {
+    const storageKey = 'drifter-menu-current-date-v4';
+    const start = new Date(2032, 1, 7, 0, 0, 0);
+
+    sessionStorage.removeItem('drifter-menu-current-date-v2');
+    sessionStorage.removeItem('drifter-menu-current-date-v3');
+    sessionStorage.removeItem('drifter-menu-refresh-count');
+
+    const storedValue = sessionStorage.getItem(storageKey);
+    const parsed = storedValue ? new Date(storedValue) : null;
+    const displayDate = parsed && !Number.isNaN(parsed.getTime())
+      ? new Date(parsed)
+      : new Date(start);
+    const nextDate = new Date(displayDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    sessionStorage.setItem(storageKey, nextDate.toISOString());
+
+    const hours = Math.floor(Math.random() * 24);
+    const minutes = Math.floor(Math.random() * 60);
+    const timeDate = new Date(displayDate);
+    timeDate.setHours(hours, minutes, 0, 0);
+
+    return {
+      date: `${String(displayDate.getDate()).padStart(2, '0')}.${String(displayDate.getMonth() + 1).padStart(2, '0')}.${displayDate.getFullYear()}`,
+      time: timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+  }
+
+  const initial = getMenuDateTime();
+  if (dateEl) dateEl.textContent = initial.date;
+  if (timeEl) timeEl.textContent = initial.time;
+
+  let colon = true;
+  let currentTime = initial.time;
+  const signalBars = Array.from(document.querySelectorAll('.signal-bar-inner span'));
+  let signalFrame = 0;
+
+  setInterval(() => {
+    colon = !colon;
+    if (timeEl) {
+      currentTime = currentTime.replace(/:/g, colon ? ':' : ' ');
+      timeEl.textContent = currentTime;
+    }
+  }, 900);
+
+  setInterval(() => {
+    signalFrame = (signalFrame + 1) % 4;
+    signalBars.forEach((bar, index) => {
+      const shouldActivate = index < 3 + (signalFrame % 2);
+      bar.classList.toggle('active', shouldActivate);
+    });
+  }, 500);
+})();
+
+// ── Nav focus ─────────────────────────────────────────────────────────────────
+const titleGlitchEl = document.getElementById('title-glitch');
+const glitchMessages = [
+  'YOU ARE STUCK HERE',
+  'ARE YOU REALLY HUMAN?',
+  'YOU ARE NOT FROM HERE',
+  'THE SIGNAL KNOWS YOU',
+  'THIS PLACE REMEMBERS',
+];
+
+function showTitleGlitch() {
+  if (!titleGlitchEl) return;
+  const message = glitchMessages[Math.floor(Math.random() * glitchMessages.length)];
+  titleGlitchEl.textContent = message;
+  titleGlitchEl.classList.remove('active');
+  void titleGlitchEl.offsetWidth;
+  titleGlitchEl.classList.add('active');
+  window.setTimeout(() => titleGlitchEl.classList.remove('active'), 1800);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Archives reads real cross-run WorldInfoLayer deposits (localStorage) -
+// notes left behind by Drifters in previous runs. Per lore, not every
+// logbook can be trusted: the Counter-Drifter faction plants fakes.
+function buildArchivesBody() {
+  let deposits = [];
+  try {
+    deposits = JSON.parse(localStorage.getItem('drifter_home_screen') || '[]');
+  } catch (e) {
+    deposits = [];
+  }
+  const advisory = '<div style="color:var(--dimmer);font-size:0.58rem;margin-top:10px;letter-spacing:0.14em;text-transform:uppercase;">WNCORE ADVISORY: not every logbook is genuine. Verify before you trust.</div>';
+  if (!Array.isArray(deposits) || deposits.length === 0) {
+    return '<div>No field logs on record. Deposits left behind by Drifters who made it back - or did not - will surface here as your runs accumulate.</div>' + advisory;
+  }
+  const rows = deposits.slice(-12).reverse().map(d => {
+    const region = d && d.region ? escapeHtml(d.region) : 'UNKNOWN REGION';
+    const zoneType = d && d.zoneType ? escapeHtml(String(d.zoneType).replace(/_/g, ' ')) : '';
+    const text = d && d.text ? escapeHtml(d.text) : '(illegible)';
+    return '<div style="margin-bottom:12px;">' +
+      '<div style="color:var(--dim);font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2px;">' + region + (zoneType ? ' / ' + zoneType : '') + '</div>' +
+      '<div>' + text + '</div>' +
+      '</div>';
+  }).join('');
+  return rows + advisory;
+}
+
+const panelDefinitions = {
+  continue: {
+    title: 'Continue Expedition',
+    body: 'Resume your last run. The relay held the signal while you were gone.'
+  },
+  'new-game': {
+    title: 'New Structured Run',
+    body: 'Deploy a Drifter into a fixed-origin zone. Structured narrative. One shot. The logbook starts clean.'
+  },
+  expedition: {
+    title: 'Open Run',
+    body: 'Procedural zone. Fresh Drifter drawn from the roster. Move quietly, catalog what you find, extract before the signal drops. No two runs the same.'
+  },
+  archives: {
+    title: 'Archives',
+    body: ''
+  },
+  settings: {
+    title: 'Relay Configuration',
+    body: 'Adjust audio, difficulty, and display settings.'
+  },
+  credits: {
+    title: 'Credits',
+    body: 'DRIFTER\'S TALE - an Another Sky story. Design, writing and direction by Siharu. Built with TypeScript and Three.js. Broadcast maintained from WNCORE Relay Station 7. The signal is weak, but it\'s still calling.'
+  }
+};
+const overlayEl = document.getElementById('dialog-overlay');
+const overlayTitle = document.getElementById('dialog-title');
+const overlayBody = document.getElementById('dialog-body');
+const overlayClose = document.getElementById('dialog-close');
+
+function openPanel(action) {
+  const def = panelDefinitions[action];
+  if (!def) return;
+  overlayTitle.textContent = def.title;
+  if (action === 'archives') { overlayBody.innerHTML = buildArchivesBody(); } else { overlayBody.textContent = def.body; }
+  overlayEl.style.display = 'flex';
+  overlayClose.focus();
+}
+function closePanel() {
+  overlayEl.style.display = 'none';
+}
+
+overlayClose.addEventListener('click', closePanel);
+overlayEl.addEventListener('click', e => {
+  if (e.target === overlayEl) closePanel();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && overlayEl.style.display === 'flex') closePanel();
+});
+
+document.getElementById('main-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-item');
+  if (!btn || btn.classList.contains('disabled')) return;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const action = btn.dataset.action;
+  playMenuTone();
+  if (action === 'continue') {
+    startGame('exploration');
+  } else if (action === 'new-game') {
+    startGame('story');
+  } else if (action === 'expedition') {
+    startGame('exploration');
+  } else if (action === 'settings') {
+    openGameSettings();
+  } else {
+    openPanel(action);
+  }
+});
+document.addEventListener('keydown', e => {
+  const items = [...document.querySelectorAll('.nav-item:not(.disabled)')];
+  const cur = items.findIndex(i => i.classList.contains('active'));
+  if (e.key === 'ArrowDown') {
+    const next = items[(cur + 1) % items.length];
+    items.forEach(i => i.classList.remove('active'));
+    next.classList.add('active');
+    next.focus();
+    e.preventDefault();
+  } else if (e.key === 'ArrowUp') {
+    const prev = items[(cur - 1 + items.length) % items.length];
+    items.forEach(i => i.classList.remove('active'));
+    prev.classList.add('active');
+    prev.focus();
+    e.preventDefault();
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    const active = items[cur];
+    if (active) {
+      active.click();
+      e.preventDefault();
+    }
+  }
+});
+
+// ── Rain canvas ───────────────────────────────────────────────────────────────
+(function initRain() {
+  const canvas = document.getElementById('rain-canvas');
+  const ctx = canvas.getContext('2d');
+
+  let W, H;
+  const drops = [];
+  const DROP_COUNT = 420;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function makeDrops() {
+    drops.length = 0;
+    for (let i = 0; i < DROP_COUNT; i++) {
+      drops.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        len: 10 + Math.random() * 22,
+        speed: 14 + Math.random() * 18,
+        opacity: 0.08 + Math.random() * 0.22,
+        width: 0.5 + Math.random() * 0.8,
+      });
+    }
+  }
+  makeDrops();
+  window.addEventListener('resize', makeDrops);
+
+  const ANGLE = Math.PI / 2 + 0.32; // slight diagonal
+
+  let last = 0;
+  function frame(ts) {
+    const dt = Math.min((ts - last) / 1000, 0.05);
+    last = ts;
+
+    ctx.clearRect(0, 0, W, H);
+
+    for (const d of drops) {
+      d.x += Math.cos(ANGLE) * d.speed * dt * 60 * 0.08;
+      d.y += Math.sin(ANGLE) * d.speed * dt * 60 * 0.14;
+
+      if (d.y > H + 30) { d.y = -30; d.x = Math.random() * W; }
+      if (d.x > W + 10) { d.x = -10; }
+
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(160,180,210,${d.opacity})`;
+      ctx.lineWidth = d.width;
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(
+        d.x + Math.cos(ANGLE) * d.len,
+        d.y + Math.sin(ANGLE) * d.len
+      );
+      ctx.stroke();
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+// ── Noise canvas ──────────────────────────────────────────────────────────────
+(function initNoise() {
+  const c = document.getElementById('noise');
+  c.width = 200; c.height = 200;
+  c.style.width = '100%'; c.style.height = '100%';
+  const ctx = c.getContext('2d');
+
+  function refreshNoise() {
+    const img = ctx.createImageData(200, 200);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = Math.random() * 255 | 0;
+      img.data[i] = img.data[i+1] = img.data[i+2] = v;
+      img.data[i+3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  refreshNoise();
+  setInterval(refreshNoise, 110);
+})();
+
+// ── Lightning + Thunder (Web Audio) ──────────────────────────────────────────
+(function initStorm() {
+  const lightningEl = document.getElementById('lightning');
+  let audioCtx = null;
+  let masterGain = null;
+  let rainGain = null;
+  let ambientGain = null;
+  let rainStarted = false;
+
+  function getAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      let savedVolume = 0.8;
+      try {
+        const rawSettings = localStorage.getItem('drifter-settings-v1');
+        if (rawSettings) {
+          const parsedSettings = JSON.parse(rawSettings);
+          if (parsedSettings && typeof parsedSettings.volume === 'number') {
+            savedVolume = Math.max(0, Math.min(1, parsedSettings.volume));
+          }
+        }
+      } catch (e) { /* keep default */ }
+      masterGain.gain.value = savedVolume;
+      masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playMenuTone() {
+    let ctx;
+    try { ctx = getAudio(); } catch (e) { return; }
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(760, now);
+    osc.frequency.exponentialRampToValueAtTime(640, now + 0.08);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.025, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  }
+
+  function playThunder(delay = 0) {
+    let ctx;
+    try { ctx = getAudio(); } catch (e) { return; }
+
+    setTimeout(() => {
+      const bufLen = ctx.sampleRate * 2.8;
+      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) {
+        data[i] = (Math.random() * 2 - 1) *
+          Math.pow(Math.max(0, 1 - i / bufLen), 0.4) *
+          (0.7 + 0.3 * Math.random());
+      }
+
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 280;
+      lp.Q.value = 0.7;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.24, ctx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.8);
+
+      src.connect(lp);
+      lp.connect(gain);
+      gain.connect(masterGain);
+      src.start();
+      src.stop(ctx.currentTime + 2.8);
+    }, delay);
+  }
+
+  function playRain() {
+    let ctx;
+    try { ctx = getAudio(); } catch (e) { return; }
+
+    const bufLen = ctx.sampleRate * 3;
+    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 1800;
+
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 3200;
+
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.18;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.008;
+    lfo.connect(lfoGain);
+
+    rainGain = ctx.createGain();
+    rainGain.gain.value = 0.04;
+
+    lfoGain.connect(rainGain.gain);
+    lfo.start();
+
+    src.connect(hp); hp.connect(lp); lp.connect(rainGain); rainGain.connect(masterGain);
+    src.start();
+    return rainGain;
+  }
+
+  function playAmbient() {
+    let ctx;
+    try { ctx = getAudio(); } catch (e) { return; }
+
+    const now = ctx.currentTime;
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(48, now);
+    const gain1 = ctx.createGain();
+    gain1.gain.setValueAtTime(0.0001, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(72, now);
+    const gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0.0001, now);
+    gain2.gain.exponentialRampToValueAtTime(0.008, now + 0.8);
+
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 140;
+
+    ambientGain = ctx.createGain();
+    ambientGain.gain.value = 0.14;
+    osc1.connect(gain1); gain1.connect(lowpass); lowpass.connect(ambientGain); ambientGain.connect(masterGain);
+    osc2.connect(gain2); gain2.connect(lowpass); lowpass.connect(ambientGain); ambientGain.connect(masterGain);
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 30);
+    osc2.stop(now + 30);
+  }
+
+  function startAudio() {
+    if (rainStarted) return;
+    rainStarted = true;
+    playRain();
+    playAmbient();
+  }
+
+  function doLightningFlash() {
+    // multi-stroke flash
+    const strokes = [
+      { t: 0,    o: 0.55, d: 40  },
+      { t: 50,   o: 0.1,  d: 30  },
+      { t: 90,   o: 0.72, d: 60  },
+      { t: 160,  o: 0,    d: 200 },
+    ];
+    const flashStart = 0;
+    for (const s of strokes) {
+      setTimeout(() => {
+        lightningEl.style.background = `rgba(210, 225, 255, ${s.o})`;
+        if (s.o > 0.3) {
+          showTitleGlitch();
+        }
+        setTimeout(() => { lightningEl.style.background = 'rgba(200,220,255,0)'; }, s.d);
+      }, s.t);
+    }
+    const thunderDelay = 800 + Math.random() * 1200;
+    playThunder(thunderDelay);
+  }
+
+  // Schedule random lightning
+  function scheduleNextLightning() {
+    const interval = 4000 + Math.random() * 14000;
+    setTimeout(() => {
+      doLightningFlash();
+      scheduleNextLightning();
+    }, interval);
+  }
+
+  // Start audio on first interaction (browser autoplay policy)
+  document.addEventListener('click', startAudio, { once: true });
+  document.addEventListener('keydown', startAudio, { once: true });
+
+  // Lightning starts immediately (visual only until user interacts for audio)
+  setTimeout(scheduleNextLightning, 1500 + Math.random() * 3000);
+})();
+
+// ── Morse line flicker ────────────────────────────────────────────────────────
+(function morseFlicker() {
+  const sequences = [
+    '— — · — — —',
+    '· · — · · ·',
+    '— — · · — ·',
+    '· · — · — ·',
+  ];
+  const el = document.getElementById('morse-line');
+  let i = 0;
+  setInterval(() => {
+    i = (i + 1) % sequences.length;
+    el.style.opacity = '0.2';
+    setTimeout(() => {
+      el.textContent = sequences[i];
+      el.style.opacity = '0.6';
+    }, 200);
+  }, 4800);
+})();
+</script>
+</body>
+</html>
