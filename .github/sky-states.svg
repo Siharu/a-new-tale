@@ -1,0 +1,81 @@
+<svg viewBox="0 0 820 110" xmlns="http://www.w3.org/2000/svg" width="820" height="110">
+  <rect width="820" height="110" fill="#08090d" rx="6"/>
+  <defs>
+    <style>
+      .sky-label { font-family: monospace; font-size: 9px; fill: rgba(200,215,230,0.75); text-anchor: middle; }
+      .sky-sub   { font-family: monospace; font-size: 7px; fill: rgba(140,160,180,0.5); text-anchor: middle; }
+    </style>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.15)"/>
+    </marker>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- SUNNY -->
+  <rect x="10"  y="28" width="76" height="44" rx="3" fill="#e8d97a" opacity="0.18"/>
+  <rect x="10"  y="28" width="76" height="3"  rx="2" fill="#e8d97a" opacity="0.7"/>
+  <text x="48"  y="52" class="sky-label">SUNNY</text>
+  <text x="48"  y="64" class="sky-sub">nominal</text>
+
+  <!-- BLUE -->
+  <rect x="98"  y="28" width="76" height="44" rx="3" fill="#6aacdb" opacity="0.18"/>
+  <rect x="98"  y="28" width="76" height="3"  rx="2" fill="#6aacdb" opacity="0.7"/>
+  <text x="136" y="52" class="sky-label">BLUE</text>
+  <text x="136" y="64" class="sky-sub">shifted</text>
+
+  <!-- GREY -->
+  <rect x="186" y="28" width="76" height="44" rx="3" fill="#8a9aaa" opacity="0.18"/>
+  <rect x="186" y="28" width="76" height="3"  rx="2" fill="#8a9aaa" opacity="0.7"/>
+  <text x="224" y="52" class="sky-label">GREY</text>
+  <text x="224" y="64" class="sky-sub">overcast</text>
+
+  <!-- RAINY -->
+  <rect x="274" y="28" width="76" height="44" rx="3" fill="#5a7aaa" opacity="0.22"/>
+  <rect x="274" y="28" width="76" height="3"  rx="2" fill="#5a7aaa" opacity="0.8"/>
+  <text x="312" y="52" class="sky-label">RAINY</text>
+  <text x="312" y="64" class="sky-sub">rain active</text>
+
+  <!-- STATIC -->
+  <rect x="362" y="28" width="76" height="44" rx="3" fill="#8a6aaa" opacity="0.22"/>
+  <rect x="362" y="28" width="76" height="3"  rx="2" fill="#8a6aaa" opacity="0.85"/>
+  <text x="400" y="52" class="sky-label">STATIC</text>
+  <text x="400" y="64" class="sky-sub">interference</text>
+
+  <!-- STORMY -->
+  <rect x="450" y="28" width="76" height="44" rx="3" fill="#6a3a8a" opacity="0.28"/>
+  <rect x="450" y="28" width="76" height="3"  rx="2" fill="#6a3a8a" opacity="0.9"/>
+  <text x="488" y="52" class="sky-label">STORMY</text>
+  <text x="488" y="64" class="sky-sub">severe</text>
+
+  <!-- A DIFFERENT SKY -->
+  <rect x="538" y="20" width="100" height="52" rx="3" fill="#aa3a3a" opacity="0.3"/>
+  <rect x="538" y="20" width="100" height="3"  rx="2" fill="#ff4a3a" opacity="0.95" filter="url(#glow)"/>
+  <text x="588" y="46" class="sky-label">A DIFFERENT</text>
+  <text x="588" y="58" class="sky-label">SKY</text>
+  <text x="588" y="68" class="sky-sub">reality break</text>
+
+  <!-- ANOTHER SKY -->
+  <rect x="652" y="12" width="108" height="60" rx="3" fill="#0a0a1a" opacity="0.5"/>
+  <rect x="652" y="12" width="108" height="3"  rx="2" fill="#3a2aff" opacity="1" filter="url(#glow)"/>
+  <text x="706" y="40" class="sky-label">ANOTHER</text>
+  <text x="706" y="52" class="sky-label">SKY</text>
+  <text x="706" y="64" class="sky-sub">fully alien</text>
+
+  <!-- Arrows -->
+  <line x1="87"  y1="50" x2="97"  y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="175" y1="50" x2="185" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="263" y1="50" x2="273" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="351" y1="50" x2="361" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="439" y1="50" x2="449" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="527" y1="50" x2="537" y2="50" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="639" y1="46" x2="651" y2="46" stroke="rgba(255,255,255,0.12)" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- DRIFTER bracket -->
+  <line x1="186" y1="96" x2="526" y2="96" stroke="rgba(84,230,164,0.4)" stroke-width="1"/>
+  <line x1="186" y1="92" x2="186" y2="100" stroke="rgba(84,230,164,0.4)" stroke-width="1"/>
+  <line x1="526" y1="92" x2="526" y2="100" stroke="rgba(84,230,164,0.4)" stroke-width="1"/>
+  <text x="356" y="108" font-family="monospace" font-size="7.5" fill="rgba(84,230,164,0.5)" text-anchor="middle">DRIFTER'S TALE · 6 months post-collapse</text>
+</svg>

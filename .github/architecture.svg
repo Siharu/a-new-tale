@@ -1,0 +1,177 @@
+<svg viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg" width="760" height="480">
+  <rect width="760" height="480" fill="#06090f" rx="6"/>
+  <defs>
+    <style>
+      .node     { font-family: monospace; font-size: 8.5px; fill: rgba(210,228,244,0.9); text-anchor: middle; }
+      .node-sub { font-family: monospace; font-size: 6.5px; fill: rgba(140,165,190,0.55); text-anchor: middle; }
+      .grp      { font-family: monospace; font-size: 7px; fill: rgba(84,230,164,0.55); letter-spacing: 1.5px; }
+    </style>
+    <filter id="ng">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ENTRY -->
+  <rect x="310" y="14" width="140" height="36" rx="3" fill="rgba(84,230,164,0.1)" stroke="rgba(84,230,164,0.5)" stroke-width="1.2" filter="url(#ng)"/>
+  <text x="380" y="29" class="node" font-size="9" fill="rgba(84,230,164,0.95)">menu.html</text>
+  <text x="380" y="42" class="node-sub">entry point · cinematic shell</text>
+  <line x1="380" y1="50" x2="380" y2="68" stroke="rgba(84,230,164,0.5)" stroke-width="1.2"/>
+
+  <!-- UI LAYER -->
+  <text x="18" y="80" class="grp">UI LAYER</text>
+  <rect x="280" y="68" width="200" height="36" rx="3" fill="rgba(100,160,220,0.08)" stroke="rgba(100,160,220,0.4)" stroke-width="1"/>
+  <text x="380" y="83" class="node">HomeScreen</text>
+  <text x="380" y="95" class="node-sub">home-screen.ts · AppMode state machine</text>
+  <line x1="350" y1="104" x2="230" y2="140" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="410" y1="104" x2="530" y2="140" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+
+  <!-- DrifterAudio -->
+  <rect x="10" y="68" width="110" height="36" rx="3" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  <text x="65" y="83" class="node">DrifterAudio</text>
+  <text x="65" y="95" class="node-sub">Web Audio API · no deps</text>
+  <line x1="280" y1="86" x2="120" y2="86" stroke="rgba(84,230,164,0.18)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- RUNTIME -->
+  <text x="18" y="152" class="grp">RUNTIME</text>
+  <rect x="165" y="140" width="130" height="36" rx="3" fill="rgba(100,160,220,0.07)" stroke="rgba(100,160,220,0.32)" stroke-width="1"/>
+  <text x="230" y="155" class="node">GameRuntime</text>
+  <text x="230" y="167" class="node-sub">GameRuntime.ts · tick loop</text>
+  <line x1="230" y1="176" x2="230" y2="210" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+
+  <!-- ENGINE -->
+  <text x="460" y="152" class="grp">ENGINE</text>
+  <rect x="460" y="140" width="130" height="36" rx="3" fill="rgba(100,160,220,0.07)" stroke="rgba(100,160,220,0.32)" stroke-width="1"/>
+  <text x="525" y="155" class="node">GameplayEngine</text>
+  <text x="525" y="167" class="node-sub">composition root</text>
+  <line x1="525" y1="176" x2="525" y2="210" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="295" y1="158" x2="460" y2="158" stroke="rgba(84,230,164,0.18)" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- RENDER PIPELINE -->
+  <text x="18" y="222" class="grp">RENDER PIPELINE</text>
+  <rect x="130" y="210" width="200" height="36" rx="3" fill="rgba(84,230,164,0.06)" stroke="rgba(84,230,164,0.28)" stroke-width="1"/>
+  <text x="230" y="225" class="node">IsometricRenderer</text>
+  <text x="230" y="237" class="node-sub">orchestrates all 11 render systems</text>
+
+  <!-- render row 1 -->
+  <rect x="18"  y="262" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="62"  y="275" class="node">SkySystem</text>
+  <text x="62"  y="285" class="node-sub">9 wrongness states</text>
+
+  <rect x="116" y="262" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="160" y="275" class="node">PixelPipeline</text>
+  <text x="160" y="285" class="node-sub">384x216 render target</text>
+
+  <rect x="214" y="262" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="258" y="275" class="node">LightingCtrl</text>
+  <text x="258" y="285" class="node-sub">key + fill + ambient</text>
+
+  <rect x="312" y="262" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="356" y="275" class="node">GodRayLayer</text>
+  <text x="356" y="285" class="node-sub">GPU crepuscular</text>
+
+  <!-- render row 2 -->
+  <rect x="18"  y="304" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="62"  y="317" class="node">RainSystem</text>
+  <text x="62"  y="327" class="node-sub">regular + Obsedia</text>
+
+  <rect x="116" y="304" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="160" y="317" class="node">DustParticles</text>
+  <text x="160" y="327" class="node-sub">GPU point sprites</text>
+
+  <rect x="214" y="304" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="258" y="317" class="node">AtmosphereCtrl</text>
+  <text x="258" y="327" class="node-sub">CSS lens overlays</text>
+
+  <rect x="312" y="304" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="356" y="317" class="node">SVGBuildings</text>
+  <text x="356" y="327" class="node-sub">factory + rasterizer</text>
+
+  <rect x="410" y="304" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="454" y="317" class="node">IsoTileMap</text>
+  <text x="454" y="327" class="node-sub">tile geometry</text>
+
+  <rect x="508" y="304" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="552" y="317" class="node">TextureCache</text>
+  <text x="552" y="327" class="node-sub">LRU · GPU eviction</text>
+
+  <!-- wires from IsometricRenderer -->
+  <line x1="230" y1="246" x2="62"  y2="262" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="160" y2="262" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="258" y2="262" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="356" y2="262" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="62"  y2="304" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="160" y2="304" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="258" y2="304" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="356" y2="304" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="454" y2="304" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="230" y1="246" x2="552" y2="304" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+
+  <!-- GAMEPLAY LAYER -->
+  <text x="460" y="222" class="grp">GAMEPLAY LAYER</text>
+
+  <rect x="420" y="210" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="464" y="223" class="node">DrifterEntity</text>
+  <text x="464" y="233" class="node-sub">stats · state · roster</text>
+
+  <rect x="518" y="210" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="562" y="223" class="node">HuskSystem</text>
+  <text x="562" y="233" class="node-sub">patrol · escalation AI</text>
+
+  <rect x="420" y="252" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="464" y="265" class="node">ZoneStreamer</text>
+  <text x="464" y="275" class="node-sub">3x3 window · LRU</text>
+
+  <rect x="518" y="252" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="562" y="265" class="node">WorldInfoLayer</text>
+  <text x="562" y="275" class="node-sub">logbook · cross-run</text>
+
+  <rect x="420" y="294" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="464" y="307" class="node">RunManager</text>
+  <text x="464" y="317" class="node-sub">permadeath · roster</text>
+
+  <rect x="518" y="294" width="88" height="30" rx="2" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <text x="562" y="307" class="node">CatalogSystem</text>
+  <text x="562" y="317" class="node-sub">discovery · logbook</text>
+
+  <!-- wires from GameplayEngine -->
+  <line x1="525" y1="176" x2="464" y2="210" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="525" y1="176" x2="562" y2="210" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="525" y1="176" x2="464" y2="252" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="525" y1="176" x2="562" y2="252" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="525" y1="176" x2="464" y2="294" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+  <line x1="525" y1="176" x2="562" y2="294" stroke="rgba(84,230,164,0.18)" stroke-width="1"/>
+
+  <!-- DATA LAYER -->
+  <text x="18" y="356" class="grp">DATA LAYER</text>
+
+  <rect x="18"  y="362" width="110" height="30" rx="2" fill="rgba(220,180,60,0.06)" stroke="rgba(220,180,60,0.25)" stroke-width="1"/>
+  <text x="73"  y="375" class="node">husk_records.ts</text>
+  <text x="73"  y="385" class="node-sub">23 threats · survivor POV</text>
+
+  <rect x="138" y="362" width="110" height="30" rx="2" fill="rgba(220,180,60,0.06)" stroke="rgba(220,180,60,0.25)" stroke-width="1"/>
+  <text x="193" y="375" class="node">fact_pools.ts</text>
+  <text x="193" y="385" class="node-sub">240+ lore entries · 7 pools</text>
+
+  <rect x="258" y="362" width="110" height="30" rx="2" fill="rgba(220,180,60,0.06)" stroke="rgba(220,180,60,0.25)" stroke-width="1"/>
+  <text x="313" y="375" class="node">worldgen.ts</text>
+  <text x="313" y="385" class="node-sub">6 procedural zones</text>
+
+  <rect x="378" y="362" width="110" height="30" rx="2" fill="rgba(220,180,60,0.06)" stroke="rgba(220,180,60,0.25)" stroke-width="1"/>
+  <text x="433" y="375" class="node">relay_station.json</text>
+  <text x="433" y="385" class="node-sub">Dhaka · hand-authored</text>
+
+  <rect x="498" y="362" width="110" height="30" rx="2" fill="rgba(220,180,60,0.06)" stroke="rgba(220,180,60,0.25)" stroke-width="1"/>
+  <text x="553" y="375" class="node">types.ts</text>
+  <text x="553" y="385" class="node-sub">all enums + interfaces</text>
+
+  <line x1="73"  y1="362" x2="562" y2="336" stroke="rgba(220,180,60,0.15)" stroke-width="1" stroke-dasharray="2,4"/>
+  <line x1="193" y1="362" x2="562" y2="336" stroke="rgba(220,180,60,0.15)" stroke-width="1" stroke-dasharray="2,4"/>
+  <line x1="313" y1="362" x2="464" y2="282" stroke="rgba(220,180,60,0.15)" stroke-width="1" stroke-dasharray="2,4"/>
+
+  <!-- legend -->
+  <line x1="580" y1="420" x2="610" y2="420" stroke="rgba(84,230,164,0.5)" stroke-width="1.2"/>
+  <text x="615" y="423" font-family="monospace" font-size="6.5" fill="rgba(140,165,190,0.55)" text-anchor="start">direct dependency</text>
+  <line x1="580" y1="436" x2="610" y2="436" stroke="rgba(84,230,164,0.18)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="615" y="439" font-family="monospace" font-size="6.5" fill="rgba(140,165,190,0.55)" text-anchor="start">data reference</text>
+</svg>
