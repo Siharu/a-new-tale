@@ -651,7 +651,7 @@
   <!-- Title -->
   <div>
     <div class="title-block">
-      <div class="title-eyebrow">WNCORE · RELAY STATION 7</div>
+      <div class="title-eyebrow" id="station-eyebrow">WNCORE · RELAY STATION 7</div>
       <div class="title-main">Drifter's</div>
       <div class="title-sub">Tale</div>
       <div id="title-glitch" class="title-glitch" aria-hidden="true"></div>
@@ -670,6 +670,7 @@
             <span style="--bar-index: 4;"></span>
           </span>
           <span class="signal-tri"></span>
+          <span id="signal-pct" style="margin-left:6px;font-family:'VT323',monospace;font-size:0.8rem;color:var(--off-white);min-width:28px;display:inline-block;">72%</span>
         </span>
       </div>
       <div class="stat-row">
@@ -717,6 +718,14 @@
     </button>
   </nav>
 
+
+  <!-- Bottom -->
+  <div class="bottom-block">
+    <div class="tagline">The signal is weak,<br>but it's still calling.</div>
+    <div class="morse" id="morse-line">— — · — — —</div>
+  </div>
+</div>
+
   <div id="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-body">
     <div class="dialog-card">
       <div class="dialog-header">
@@ -728,13 +737,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Bottom -->
-  <div class="bottom-block">
-    <div class="tagline">The signal is weak,<br>but it's still calling.</div>
-    <div class="morse" id="morse-line">— — · — — —</div>
-  </div>
-</div>
 
 <script type="module">
 window.__DRIFTER_NO_AUTO_INIT__ = true;
@@ -866,12 +868,32 @@ function openGameSettings() {
     }
   }, 900);
 
+  // Signal percent — drifts slowly, never reaches 0 or 100
+  const signalPctEl = document.getElementById('signal-pct');
+  const RELAY_LOCATIONS = [
+    'RELAY STATION 7', 'RELAY STATION 12', 'RELAY STATION 3',
+    'RELAY OUTPOST ECHO', 'RELAY STATION 19', 'RELAY OUTPOST NINER',
+  ];
+  const eyebrowEl = document.getElementById('station-eyebrow');
+  if (eyebrowEl) {
+    const loc = RELAY_LOCATIONS[Math.floor(Math.random() * RELAY_LOCATIONS.length)];
+    eyebrowEl.textContent = 'WNCORE · ' + loc;
+  }
+
+  let signalPct = 62 + Math.floor(Math.random() * 22); // 62-83%
+  let signalDir = Math.random() < 0.5 ? 1 : -1;
+
   setInterval(() => {
     signalFrame = (signalFrame + 1) % 4;
     signalBars.forEach((bar, index) => {
       const shouldActivate = index < 3 + (signalFrame % 2);
       bar.classList.toggle('active', shouldActivate);
     });
+    // Drift signal percent
+    signalPct += signalDir * (Math.random() < 0.3 ? (Math.random() < 0.5 ? 1 : -1) : 0);
+    if (signalPct >= 84) signalDir = -1;
+    if (signalPct <= 28) signalDir = 1;
+    if (signalPctEl) signalPctEl.textContent = signalPct + '%';
   }, 500);
 })();
 
@@ -975,6 +997,9 @@ overlayEl.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && overlayEl.style.display === 'flex') closePanel();
 });
+
+// Module-scope stub — will be replaced by initStorm once audio initialises
+let playMenuTone = function() {};
 
 document.getElementById('main-nav').addEventListener('click', e => {
   const btn = e.target.closest('.nav-item');
@@ -1134,7 +1159,7 @@ document.addEventListener('keydown', e => {
     return audioCtx;
   }
 
-  function playMenuTone() {
+  playMenuTone = function() {
     let ctx;
     try { ctx = getAudio(); } catch (e) { return; }
     const now = ctx.currentTime;
@@ -1153,7 +1178,7 @@ document.addEventListener('keydown', e => {
     gain.connect(masterGain);
     osc.start(now);
     osc.stop(now + 0.15);
-  }
+  };
 
   function playThunder(delay = 0) {
     let ctx;
