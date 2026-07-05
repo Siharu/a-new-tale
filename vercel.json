@@ -1,7 +1,8 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/", "dest": "/menu.html" },
-    { "src": "/(.*)", "dest": "/$1" }
+  "buildCommand": "npm run build",
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/", "destination": "/menu.html" }
   ]
 }
