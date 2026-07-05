@@ -1632,7 +1632,7 @@ export class HomeScreen {
   }
 
   // ── Background: full-bleed, layered, parallax-ish ───────────────────────────
-  private renderBackground(skyFilter: string): HTMLElement {
+  private renderBackground(_skyFilter: string): HTMLElement {
     const bg = el('div', {
       position: 'absolute',
       inset: '0',
@@ -1655,7 +1655,6 @@ export class HomeScreen {
     // Parallax layers (screen composited)
     const blendModes: GlobalCompositeOperation[] = ['screen', 'screen', 'overlay', 'multiply'];
     const layerOpacities = [0.12, 0.1, 0.08, 0.06];
-    const folder = this.backgroundFolder;
     const layerCount = 0;
 
     for (let i = 0; i < layerCount; i++) {
