@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { IsometricRenderer } from '../render/IsometricRenderer.js';
 import { SkySystem } from '../render/SkySystem.js';
 import { SpriteAnimator, vectorToDirection } from '../render/SpriteAnimator.js';

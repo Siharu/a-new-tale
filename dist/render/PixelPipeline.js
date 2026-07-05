@@ -16,7 +16,7 @@
  * same letterboxed nearest-neighbor blit path as the raw scene render,
  * instead of duplicating that math in a second place.
  */
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 export class PixelPipeline {
     constructor(options = {}) {
         this.internalWidth = options.internalWidth ?? 384;

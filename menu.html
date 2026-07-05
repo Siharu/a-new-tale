@@ -8,1115 +8,732 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=VT323&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-      }
-    }
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
   </script>
   <style>
+    /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --red: #c0392b;
-      --red-glow: rgba(192, 57, 43, 0.6);
-      --off-white: #d8dce2;
-      --dim: #7a8590;
-      --dimmer: #4a5560;
-      --panel-w: 340px;
+      --red:      #c0392b;
+      --off:      #d8dce2;
+      --dim:      #7a8590;
+      --dimmer:   #3a4550;
+      --panel-w:  360px;
+      --pad:      48px;
     }
 
     html, body {
-      
       width: 100%; height: 100%;
-      background: #000;
       overflow: hidden;
+      background: #000;
       font-family: 'Share Tech Mono', monospace;
-      color: var(--off-white);
+      color: var(--off);
     }
 
-    /* ── Background image ── */
+    /* ── Layers (back to front) ── */
+
+    /* 0 — background image */
     #bg {
-      position: fixed; inset: 0;
+      position: fixed; inset: 0; z-index: 0;
       background-image: url('./assets/wncorelastbastion.png');
       background-size: cover;
-      background-position: center center;
-      /* slight dark tint so text reads cleanly */
-      filter: brightness(0.72) contrast(1.05);
-      z-index: 0;
+      background-position: center;
+      filter: brightness(0.68) contrast(1.08) saturate(0.85);
     }
 
-    /* ── Rain canvas ── */
-    #rain-canvas {
-      position: fixed; inset: 0;
-      z-index: 1;
-      pointer-events: none;
+    /* 1 — rain */
+    #rain { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+    /* 2 — vignette */
+    #vignette {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      background: radial-gradient(ellipse at 60% 50%, transparent 38%, rgba(0,0,0,0.72) 100%);
     }
 
-    /* ── Lightning flash overlay ── */
-    #lightning {
-      position: fixed; inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      background: rgba(200, 220, 255, 0);
-      transition: background 0.04s ease;
+    /* 3 — left panel fog */
+    #fog {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 520px; z-index: 3; pointer-events: none;
+      background: linear-gradient(to right, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.6) 55%, transparent 100%);
     }
 
-    /* ── SVG effects layer (blinking dot, rain streaks on top) ── */
-    #svg-overlay {
-      position: fixed; inset: 0;
-      z-index: 3;
-      pointer-events: none;
+    /* 4 — scanlines */
+    #scan {
+      position: fixed; inset: 0; z-index: 4; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px);
     }
 
-    /* ── Left gradient fade so panel text reads ── */
-    #left-fade {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 540px;
-      background: linear-gradient(
-        to right,
-        rgba(0,0,0,0.88) 0%,
-        rgba(0,0,0,0.72) 40%,
-        rgba(0,0,0,0.0) 100%
-      );
-      z-index: 4;
-      pointer-events: none;
-    }
+    /* 5 — noise */
+    #noise { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0.022; image-rendering: pixelated; width: 100%; height: 100%; }
 
-    /* ── Left edge accent line ── */
-    #edge-line {
-      position: fixed;
-      top: 0; left: var(--panel-w);
-      width: 1px; height: 100%;
-      background: linear-gradient(to bottom,
-        transparent 0%,
-        rgba(255,255,255,0.06) 20%,
-        rgba(255,255,255,0.06) 80%,
-        transparent 100%
-      );
-      z-index: 5;
-      pointer-events: none;
-    }
+    /* 6 — lightning */
+    #lightning { position: fixed; inset: 0; z-index: 6; pointer-events: none; background: rgba(200,220,255,0); transition: background 0.04s; }
 
-    /* ── Scanlines ── */
-    #scanlines {
-      position: fixed; inset: 0;
-      z-index: 6;
-      pointer-events: none;
-      background: repeating-linear-gradient(
-        to bottom,
-        transparent 0px, transparent 2px,
-        rgba(0,0,0,0.055) 2px, rgba(0,0,0,0.055) 3px
-      );
-    }
-
-    /* ── Noise flicker ── */
-    #noise {
-      position: fixed; inset: 0;
-      z-index: 7;
-      pointer-events: none;
-      opacity: 0.025;
-      image-rendering: pixelated;
-    }
-
-    #app {
-      position: fixed;
-      inset: 0;
-      z-index: 30;
-      display: none;
-      pointer-events: auto;
-      background: transparent;
-    }
-
-    /* ── UI panel ── */
+    /* 7 — panel UI */
     #panel {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: var(--panel-w);
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 44px 36px 48px 40px;
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--panel-w); z-index: 10;
+      display: flex; flex-direction: column;
+      padding: var(--pad) 40px var(--pad) var(--pad);
+      gap: 0;
     }
 
-    /* Title block */
-    .title-eyebrow {
-      font-family: 'VT323', 'Share Tech Mono', monospace;
-      font-size: 0.62rem;
-      letter-spacing: 0.32em;
-      color: var(--dimmer);
-      text-transform: uppercase;
-      margin-bottom: 14px;
+    /* 8 — game app container (hidden until launched) */
+    #app {
+      position: fixed; inset: 0; z-index: 20; display: none;
     }
-    .title-block {
-      position: relative;
+
+    /* 9 — dialog */
+    #dialog {
+      position: fixed; inset: 0; z-index: 30;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.78); padding: 24px;
     }
+    #dialog.open { display: flex; }
+    .dlg-card {
+      width: min(600px, 100%);
+      background: rgba(8,14,22,0.97);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+      padding: 32px 32px 24px;
+    }
+    .dlg-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .dlg-title {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.6rem;
+      font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: #fff;
+    }
+    .dlg-body { font-size: 0.88rem; line-height: 1.7; color: var(--dim); }
+    .dlg-close {
+      background: transparent; border: 1px solid rgba(255,255,255,0.1);
+      color: var(--off); width: 36px; height: 36px; border-radius: 2px;
+      font-size: 1.2rem; cursor: pointer; flex-shrink: 0;
+      transition: background 0.1s;
+    }
+    .dlg-close:hover { background: rgba(255,255,255,0.07); }
+
+    /* 10 — horror flash */
+    #wrongline {
+      position: fixed; bottom: 20px; right: 24px; z-index: 40;
+      font-family: 'VT323', monospace; font-size: 0.6rem;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(192,57,43,0); pointer-events: none;
+      transition: color 0.07s;
+    }
+    #wrongline.on { color: rgba(192,57,43,0.7); }
+
+    /* ── Panel contents ── */
+
+    .eyebrow {
+      font-family: 'VT323', monospace; font-size: 0.62rem;
+      letter-spacing: 0.3em; color: var(--dimmer);
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+
+    .title-wrap { margin-bottom: 36px; }
     .title-main {
-      font-family: 'Rubik Glitch', 'Rajdhani', sans-serif;
-      font-size: 3.2rem;
-      font-weight: 400;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      line-height: 0.95;
-      color: #f3f7ff;
-      text-shadow: 0 0 18px rgba(255,255,255,0.08);
-      opacity: 0.95;
-    }
-    .title-glitch {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'VT323', 'Share Tech Mono', monospace;
-      font-size: clamp(0.95rem, 1.8vw, 1.25rem);
-      font-weight: 400;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: #fff;
-      text-shadow: 0 0 12px rgba(255,255,255,0.35), 0 0 18px rgba(255,60,60,0.2);
-      opacity: 0;
-      pointer-events: none;
-      mix-blend-mode: screen;
-      transform: translateY(6px);
-      transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-    .title-glitch.active {
-      opacity: 1;
-      transform: translateY(0);
-      animation: title-glitch 0.35s steps(2, end) 1;
+      font-family: 'Rubik Glitch', sans-serif;
+      font-size: clamp(2.6rem, 5vw, 3.8rem);
+      font-weight: 400; line-height: 0.92;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #eef2ff;
+      text-shadow: 0 0 40px rgba(255,255,255,0.06);
     }
     .title-sub {
-      font-family: 'Rubik Glitch', 'Rajdhani', sans-serif;
-      font-size: 0.78rem;
-      font-weight: 400;
-      letter-spacing: 0.5em;
-      text-transform: uppercase;
-      color: rgba(216,220,226,0.83);
-      margin-top: 8px;
-      opacity: 0.9;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.72rem; font-weight: 400;
+      letter-spacing: 0.52em; text-transform: uppercase;
+      color: rgba(216,220,226,0.6); margin-top: 6px;
     }
 
-    /* Station stats */
-    .stats-block {
-      margin-top: 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
+    /* stats */
+    .stats { display: flex; flex-direction: column; gap: 4px; margin-bottom: 36px; }
+    .stat {
+      display: grid; grid-template-columns: 118px 1fr;
+      font-family: 'VT323', monospace; font-size: 0.78rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
     }
-    .stat-row {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      font-size: 0.68rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--dim);
+    .stat-l { color: var(--dimmer); }
+    .stat-v { color: var(--off); }
+    .sig-wrap { display: flex; align-items: center; gap: 8px; }
+    .sig-bars { display: flex; gap: 3px; align-items: flex-end; }
+    .sig-bars span {
+      display: block; width: 3px;
+      background: var(--dim); opacity: 0.3; border-radius: 1px;
+      transition: opacity 0.3s, background 0.3s;
     }
-    .stat-label { color: var(--dimmer); font-family: 'VT323', 'Share Tech Mono', monospace; }
-    .stat-value { color: var(--off-white); font-family: 'VT323', 'Share Tech Mono', monospace; }
-    .signal-bar {
-      display: flex; align-items: center; gap: 6px;
-    }
-    .signal-bar-inner {
-      display: flex; gap: 3px; align-items: center;
-    }
-    .signal-bar-inner span {
-      display: block;
-      width: 14px; height: 2px;
-      background: var(--dim);
-      opacity: 0.35;
-      transform-origin: center;
-      animation: signal-bar-flicker 1.1s ease-in-out infinite;
-      animation-delay: calc(var(--bar-index, 0) * 0.08s);
-    }
-    .signal-bar-inner span.active {
-      background: var(--off-white);
-      box-shadow: 0 0 8px rgba(255,255,255,0.24);
-      opacity: 1;
-      animation: signal-bar-pulse 0.95s ease-in-out infinite;
-    }
-    .signal-tri {
-      width: 0; height: 0;
-      border-top: 4px solid transparent;
-      border-bottom: 4px solid transparent;
-      border-left: 6px solid var(--dim);
-      margin-left: 2px;
-      animation: signal-tri-pulse 1.2s ease-in-out infinite;
-    }
+    .sig-bars span:nth-child(1) { height: 5px; }
+    .sig-bars span:nth-child(2) { height: 8px; }
+    .sig-bars span:nth-child(3) { height: 12px; }
+    .sig-bars span:nth-child(4) { height: 16px; }
+    .sig-bars span:nth-child(5) { height: 20px; }
+    .sig-bars span.lit { background: var(--off); opacity: 1; }
+    .sig-pct { font-family: 'VT323', monospace; font-size: 0.78rem; color: var(--off); min-width: 28px; }
 
-    /* Nav */
-    .nav-block {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    /* nav */
+    .nav-label {
+      font-family: 'VT323', monospace; font-size: 0.6rem;
+      letter-spacing: 0.26em; color: var(--dimmer);
+      text-transform: uppercase; margin-bottom: 8px;
     }
+    nav { display: flex; flex-direction: column; gap: 1px; flex: 1; }
     .nav-item {
-      display: flex;
-      flex-direction: column;
-      padding: 8px 0 8px 0;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      text-align: left;
-      position: relative;
-      transition: color 0.12s;
-      outline: none;
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0; background: transparent; border: none;
+      cursor: pointer; text-align: left; outline: none;
+      transition: opacity 0.1s;
     }
-    .nav-item .nav-label {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.15rem;
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--off-white);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: color 0.12s, letter-spacing 0.12s;
-    }
-    .nav-item .nav-desc {
-      font-family: 'VT323', 'Share Tech Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.12em;
-      color: var(--dimmer);
-      margin-top: 2px;
-      padding-left: 22px;
-      display: none;
-    }
-    .nav-item.active .nav-label,
-    .nav-item:hover .nav-label {
-      color: #ffffff;
-      letter-spacing: 0.28em;
-    }
-    .nav-item.active .nav-desc,
-    .nav-item:hover .nav-desc {
-      display: block;
-    }
-    /* selection marker */
+    .nav-item:focus-visible { outline: 1px solid rgba(255,255,255,0.2); outline-offset: 2px; }
+    .nav-item.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
     .nav-marker {
-      display: inline-block;
-      width: 10px; height: 10px;
-      border: 1px solid var(--dimmer);
-      background: transparent;
-      flex-shrink: 0;
-      transition: background 0.12s, border-color 0.12s;
+      width: 8px; height: 8px; border: 1px solid var(--dimmer);
+      flex-shrink: 0; transition: background 0.1s, border-color 0.1s;
     }
-    .nav-item.active .nav-marker,
-    .nav-item:hover .nav-marker {
-      background: var(--off-white);
-      border-color: var(--off-white);
+    .nav-text {
+      font-family: 'Rajdhani', sans-serif; font-size: 1.08rem;
+      font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--dim); transition: color 0.1s, letter-spacing 0.1s;
     }
+    .nav-item:hover .nav-text,
+    .nav-item.active .nav-text { color: #fff; letter-spacing: 0.26em; }
+    .nav-item:hover .nav-marker,
+    .nav-item.active .nav-marker { background: var(--off); border-color: var(--off); }
 
-    #dialog-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.74);
-      padding: 28px;
-    }
-    .dialog-card {
-      width: min(640px, calc(100% - 64px));
-      background: rgba(11, 16, 22, 0.96);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 20px 80px rgba(0,0,0,0.54);
-      border-radius: 28px;
-      padding: 28px 28px 22px;
-    }
-    .dialog-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: flex-start;
-    }
-    .dialog-title {
-      margin: 0;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.9rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: #ffffff;
-    }
-    .dialog-description {
-      margin: 12px 0 0;
-      color: var(--off-white);
-      line-height: 1.6;
-      max-width: 32rem;
-      font-size: 0.95rem;
-    }
-    .dialog-close {
-      border: 1px solid rgba(255,255,255,0.14);
-      background: transparent;
-      color: var(--off-white);
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      font-size: 1.35rem;
-      cursor: pointer;
-      transition: background 0.12s, transform 0.12s;
-    }
-    .dialog-close:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
-
-    /* Bottom block */
-    .bottom-block {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+    /* bottom */
+    .bottom { margin-top: auto; padding-top: 24px; }
     .tagline {
-      font-family: 'VT323', 'Share Tech Mono', monospace;
-      font-size: 0.62rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--dimmer);
-      line-height: 1.65;
+      font-family: 'VT323', monospace; font-size: 0.6rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--dimmer); line-height: 1.7;
     }
     .morse {
-      font-family: 'VT323', 'Share Tech Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      color: var(--dimmer);
-      opacity: 0.6;
+      font-family: 'VT323', monospace; font-size: 0.58rem;
+      letter-spacing: 0.2em; color: var(--dimmer);
+      opacity: 0.45; margin-top: 6px;
+      transition: opacity 0.2s;
     }
 
     /* ── Animations ── */
-    @keyframes blink-red {
-      0%, 45%   { opacity: 1; }
-      50%, 95%  { opacity: 0.08; }
-      100%      { opacity: 1; }
+    @keyframes breath { 0%,100%{opacity:1} 50%{opacity:0.94} }
+    body { animation: breath 10s ease-in-out infinite; }
+
+    /* glitch flicker on title on lightning */
+    .title-main.glitch {
+      animation: tglitch 0.3s steps(2,end) 1;
     }
-    @keyframes blink-glow {
-      0%, 45%   { opacity: 0.7; r: 7px; }
-      50%, 95%  { opacity: 0; r: 2px; }
-      100%      { opacity: 0.7; r: 7px; }
-    }
-    @keyframes title-glitch {
-      0%, 100% { text-shadow: 0 0 16px rgba(255,255,255,0.45), 0 0 28px rgba(255,60,60,0.22); transform: translate(0, 0); }
-      20% { text-shadow: -2px 0 0 rgba(255,60,60,0.45), 2px 0 0 rgba(120,220,255,0.35); transform: translate(-1px, 1px); }
-      40% { text-shadow: 2px 0 0 rgba(255,60,60,0.4), -2px 0 0 rgba(120,220,255,0.35); transform: translate(1px, -1px); }
-      60% { text-shadow: -1px 0 0 rgba(255,255,255,0.5), 1px 0 0 rgba(255,60,60,0.3); transform: translate(-1px, 0); }
-      80% { text-shadow: 1px 0 0 rgba(120,220,255,0.4), -1px 0 0 rgba(255,60,60,0.3); transform: translate(1px, 0); }
-    }
-    @keyframes signal-bar-flicker {
-      0%, 100% { transform: scaleY(0.75); opacity: 0.22; }
-      50% { transform: scaleY(1.1); opacity: 0.72; }
-    }
-    @keyframes signal-bar-pulse {
-      0%, 100% { transform: scaleY(0.95); opacity: 0.8; }
-      50% { transform: scaleY(1.25); opacity: 1; }
-    }
-    @keyframes signal-tri-pulse {
-      0%, 100% { opacity: 0.55; transform: translateX(0); }
-      50% { opacity: 1; transform: translateX(1px); }
+    @keyframes tglitch {
+      0%,100%{text-shadow:0 0 30px rgba(255,255,255,0.1)}
+      25%{text-shadow:-2px 0 rgba(255,60,60,0.5),2px 0 rgba(120,200,255,0.4);transform:translate(-1px,1px)}
+      75%{text-shadow:2px 0 rgba(255,60,60,0.4),-2px 0 rgba(120,200,255,0.4);transform:translate(1px,-1px)}
     }
 
-    /* ── Horror layer: breath / wrong-eye / static-burst ── */
-
-    /* Subtle whole-screen breath — barely perceptible */
-    @keyframes breath {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.93; }
+    /* ── Loading state ── */
+    #boot-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: #000; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      transition: opacity 0.6s;
     }
-    body { animation: breath 9s ease-in-out infinite; }
-
-    /* Wrong text — appears, then shouldn't have */
-    #wrong-line {
-      position: fixed;
-      bottom: 18px;
-      right: 28px;
-      font-family: 'VT323', monospace;
-      font-size: 0.58rem;
-      letter-spacing: 0.18em;
+    #boot-overlay.fade { opacity: 0; pointer-events: none; }
+    .boot-line {
+      font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.2em; color: rgba(255,255,255,0.35);
       text-transform: uppercase;
-      color: rgba(192, 57, 43, 0.0);
-      z-index: 20;
-      pointer-events: none;
-      transition: color 0.08s;
-      user-select: none;
     }
-    #wrong-line.visible {
-      color: rgba(192, 57, 43, 0.72);
-    }
+    .boot-line.hi { color: rgba(255,255,255,0.8); }
 
-    /* The eye — barely there, corner of vision */
-    #wrong-eye {
-      position: fixed;
-      top: 50%;
-      right: 18px;
-      transform: translateY(-50%);
-      width: 38px;
-      height: 18px;
-      z-index: 20;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.12s ease;
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      z-index: 60; padding: 10px 22px;
+      background: rgba(4,8,16,0.94); border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Share Tech Mono', monospace; font-size: 0.62rem;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(140,210,180,0.85);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
-    #wrong-eye ellipse { fill: none; stroke: rgba(192,57,43,0.7); stroke-width: 1; }
-    #wrong-eye circle  { fill: rgba(192,57,43,0.55); }
-    #wrong-eye.visible { opacity: 1; }
+    #toast.on { opacity: 1; }
 
-    /* Static burst — full screen, brief */
-    #static-burst {
-      position: fixed; inset: 0;
-      z-index: 40;
-      pointer-events: none;
-      opacity: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
-      background-size: 200px 200px;
-      mix-blend-mode: screen;
-      transition: opacity 0.05s;
-    }
-
-    /* Morse-line occasional wrong char */
-    .morse-wrong {
-      color: rgba(192,57,43,0.8);
-      animation: morse-blink 0.18s steps(1,end) 3;
-    }
-    @keyframes morse-blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0; }
-    }
-
-    /* Tagline corruption */
-    .tagline-corrupt {
-      color: rgba(192,57,43,0.6) !important;
-      font-family: 'Rubik Glitch', monospace !important;
-      letter-spacing: 0.06em !important;
-    }
-
-    /* Nav item brief wrong-state */
-    .nav-item.cursed .nav-label {
-      color: rgba(192,57,43,0.72) !important;
-      letter-spacing: 0.32em !important;
-    }
-
-    /* Signal bar drop — all bars go dark suddenly */
-    .signal-bar-inner.dead span {
-      opacity: 0.04 !important;
-      background: var(--dimmer) !important;
-      box-shadow: none !important;
-    }
-
-    /* Station ID corruption */
-    #stat-station.corrupt {
-      color: rgba(192,57,43,0.8);
-      font-family: 'Rubik Glitch', monospace;
-    }
-
-    /* Active menu state class */
-    .nav-item.disabled .nav-label { color: var(--dimmer); opacity: 0.5; cursor: not-allowed; }
-
-    @media (max-width: 900px) {
-      :root { --panel-w: min(100%, 420px); }
-      body { overflow-y: auto; overflow-x: hidden; }
-      #panel {
-        position: absolute;
-        inset: 0;
-        width: min(100%, 420px);
-        max-width: 100%;
-        height: auto;
-        min-height: 100%;
-        padding: 28px 22px 28px;
-        justify-content: flex-start;
-        gap: 22px;
-      }
-      #left-fade {
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          to bottom,
-          rgba(0,0,0,0.9) 0%,
-          rgba(0,0,0,0.74) 55%,
-          rgba(0,0,0,0.2) 100%
-        );
-      }
-      #edge-line { display: none; }
-      .title-main { font-size: clamp(2rem, 8vw, 3rem); }
-      .title-sub { font-size: 0.68rem; letter-spacing: 0.34em; }
-      .stats-block { margin-top: 24px; }
-      .stat-row { grid-template-columns: 92px 1fr; }
-      .nav-item .nav-label { font-size: 0.98rem; letter-spacing: 0.18em; }
-      .nav-item .nav-desc { padding-left: 18px; }
-      .bottom-block { padding-top: 8px; }
-    }
-
-    @media (max-width: 600px) {
-      #panel {
-        width: 100%;
-        padding: 20px 16px 24px;
-        gap: 16px;
-      }
-      #bg { background-position: center 18%; }
-      .title-eyebrow { font-size: 0.5rem; margin-bottom: 8px; }
-      .title-main { font-size: clamp(1.7rem, 10vw, 2.35rem); line-height: 0.96; }
-      .title-glitch { font-size: clamp(0.8rem, 3.6vw, 1rem); }
-      .title-sub { font-size: 0.58rem; letter-spacing: 0.24em; }
-      .stats-block { margin-top: 14px; gap: 4px; }
-      .stat-row { grid-template-columns: 74px 1fr; font-size: 0.56rem; }
-      .nav-block { gap: 6px; }
-      .nav-item {
-        padding: 10px 0;
-        border-radius: 10px;
-        min-height: 44px;
-        justify-content: center;
-      }
-      .nav-item .nav-label { font-size: 0.9rem; letter-spacing: 0.12em; }
-      .nav-item .nav-desc { display: block; padding-left: 16px; font-size: 0.54rem; }
-      .nav-item.active .nav-label,
-      .nav-item:hover .nav-label {
-        letter-spacing: 0.14em;
-      }
-      .tagline { font-size: 0.54rem; }
-      .morse { font-size: 0.54rem; }
-      .dialog-card { width: calc(100% - 24px); padding: 18px; }
-      .dialog-title { font-size: 1.3rem; }
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      :root { --panel-w: 100%; --pad: 28px; }
+      #panel { width: 100%; justify-content: flex-start; gap: 20px; overflow-y: auto; }
+      #fog { width: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 70%, transparent 100%); }
+      .title-main { font-size: clamp(2rem, 9vw, 2.8rem); }
     }
   </style>
 </head>
 <body>
-<div id="app"></div>
 
-<!-- Background -->
+<!-- Boot overlay — hides until fonts/bg ready -->
+<div id="boot-overlay">
+  <div class="boot-line hi">WNCORE · RELAY NETWORK</div>
+  <div class="boot-line">ESTABLISHING UPLINK…</div>
+</div>
+
+<!-- Layers -->
 <div id="bg"></div>
-
-<!-- Rain canvas -->
-<canvas id="rain-canvas"></canvas>
-
-<!-- Lightning flash -->
+<canvas id="rain"></canvas>
+<div id="vignette"></div>
+<div id="fog"></div>
+<div id="scan"></div>
+<canvas id="noise" width="200" height="200"></canvas>
 <div id="lightning"></div>
 
-<!-- SVG overlay: blinking tower dot + vignette details -->
-<svg id="svg-overlay" xmlns="http://www.w3.org/2000/svg">
-  <!-- Tower blink dot — positioned at the red light in the image (~66.1% x, ~28.3% y), calibrated against source pixels -->
-  <g id="signal-network" opacity="0.45">
-    <path class="network-spiral" d="M 24 78 C 50 24, 116 18, 144 44 C 176 74, 170 142, 132 168 C 94 194, 34 184, 18 136" stroke="rgba(255,255,255,0.16)" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-dasharray="280 40">
-      <animate attributeName="stroke-dashoffset" values="280;0;280" dur="8s" repeatCount="indefinite" />
-    </path>
-    <path class="network-spiral" d="M 36 86 C 58 44, 112 38, 136 64 C 162 92, 156 132, 122 148 C 92 162, 54 156, 40 124" stroke="rgba(255,255,255,0.12)" stroke-width="1" fill="none" stroke-linecap="round" stroke-dasharray="220 30">
-      <animate attributeName="stroke-dashoffset" values="220;0;220" dur="6.6s" repeatCount="indefinite" />
-    </path>
-    <circle cx="144" cy="44" r="2.7" fill="rgba(255,255,255,0.7)">
-      <animate attributeName="opacity" values="0.4;1;0.4" dur="2.2s" repeatCount="indefinite" />
-    </circle>
-    <circle cx="132" cy="168" r="2.1" fill="rgba(255,255,255,0.55)">
-      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.8s" repeatCount="indefinite" />
-    </circle>
-  </g>
-  <!-- Outer glow -->
-  <circle id="tower-glow" cx="66.1%" cy="28.3%" r="14" fill="rgba(200,40,30,0.25)">
-    <animate attributeName="r" values="10;18;10" dur="1.8s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.35;0;0.35" dur="1.8s" repeatCount="indefinite"/>
-  </circle>
-  <!-- Core dot -->
-  <circle id="tower-dot" cx="66.1%" cy="28.3%" r="3.5" fill="#ff2a1a">
-    <animate attributeName="opacity" values="1;0.05;1" dur="1.8s" repeatCount="indefinite"/>
-  </circle>
+<!-- Game container -->
+<div id="app"></div>
 
-  <!-- Subtle vignette corners -->
-  <defs>
-    <radialGradient id="vig" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
-      <stop offset="55%" stop-color="transparent"/>
-      <stop offset="100%" stop-color="rgba(0,0,0,0.55)"/>
-    </radialGradient>
-  </defs>
-  <rect x="0" y="0" width="100%" height="100%" fill="url(#vig)"/>
-</svg>
-
-<!-- Left gradient -->
-<div id="left-fade"></div>
-<div id="edge-line"></div>
-
-<!-- Horror elements -->
-<div id="wrong-line"></div>
-<svg id="wrong-eye" viewBox="0 0 38 18" xmlns="http://www.w3.org/2000/svg">
-  <ellipse cx="19" cy="9" rx="17" ry="7"/>
-  <circle cx="19" cy="9" r="4"/>
-  <circle cx="20.5" cy="7.5" r="1.2" fill="rgba(255,255,255,0.5)"/>
-</svg>
-<div id="static-burst"></div>
-
-<!-- Scanlines -->
-<div id="scanlines"></div>
-
-<!-- Noise -->
-<canvas id="noise"></canvas>
-
-<!-- UI Panel -->
-<div id="panel">
-
-  <!-- Title -->
-  <div>
-    <div class="title-block">
-      <div class="title-eyebrow" id="station-eyebrow">WNCORE · RELAY STATION 7</div>
-      <div class="title-main">Drifter's</div>
-      <div class="title-sub">Tale</div>
-      <div id="title-glitch" class="title-glitch" aria-hidden="true"></div>
+<!-- Dialog -->
+<div id="dialog" role="dialog" aria-modal="true">
+  <div class="dlg-card">
+    <div class="dlg-head">
+      <div class="dlg-title" id="dlg-title">—</div>
+      <button class="dlg-close" id="dlg-close" aria-label="Close">×</button>
     </div>
-
-    <!-- Station stats -->
-    <div class="stats-block">
-      <div class="stat-row">
-        <span class="stat-label">Signal Strength</span>
-        <span class="stat-value signal-bar">
-          <span class="signal-bar-inner">
-            <span class="active" style="--bar-index: 0;"></span>
-            <span class="active" style="--bar-index: 1;"></span>
-            <span class="active" style="--bar-index: 2;"></span>
-            <span style="--bar-index: 3;"></span>
-            <span style="--bar-index: 4;"></span>
-          </span>
-          <span class="signal-tri"></span>
-          <span id="signal-pct" style="margin-left:6px;font-family:'VT323',monospace;font-size:0.8rem;color:var(--off-white);min-width:28px;display:inline-block;">72%</span>
-        </span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Station ID</span>
-        <span class="stat-value" id="stat-station">R-23</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Date</span>
-        <span class="stat-value" id="stat-date">02.07.2032</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Time</span>
-        <span class="stat-value" id="stat-time">23:47</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Nav -->
-  <nav class="nav-block" id="main-nav">
-    <button class="nav-item active" data-action="continue">
-      <div class="nav-label"><span class="nav-marker"></span>Continue</div>
-      <div class="nav-desc">Resume your last expedition</div>
-    </button>
-    <button class="nav-item" data-action="new-game">
-      <div class="nav-label"><span class="nav-marker"></span>New Game</div>
-      <div class="nav-desc">Begin a fresh run</div>
-    </button>
-    <button class="nav-item" data-action="expedition">
-      <div class="nav-label"><span class="nav-marker"></span>Expedition</div>
-      <div class="nav-desc">Roguelite survival run</div>
-    </button>
-    <button class="nav-item" data-action="archives">
-      <div class="nav-label"><span class="nav-marker"></span>Archives</div>
-      <div class="nav-desc">Drifter logs &amp; catalog</div>
-    </button>
-    <button class="nav-item" data-action="settings">
-      <div class="nav-label"><span class="nav-marker"></span>Settings</div>
-      <div class="nav-desc">Relay configuration</div>
-    </button>
-    <button class="nav-item" data-action="credits">
-      <div class="nav-label"><span class="nav-marker"></span>Credits</div>
-    </button>
-    <button class="nav-item disabled" data-action="quit" style="margin-top:8px;">
-      <div class="nav-label"><span class="nav-marker"></span>Quit</div>
-    </button>
-  </nav>
-
-
-  <!-- Bottom -->
-  <div class="bottom-block">
-    <div class="tagline">The signal is weak,<br>but it's still calling.</div>
-    <div class="morse" id="morse-line">— — · — — —</div>
+    <div class="dlg-body" id="dlg-body"></div>
   </div>
 </div>
 
-  <div id="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-body">
-    <div class="dialog-card">
-      <div class="dialog-header">
-        <div>
-          <h2 class="dialog-title" id="dialog-title">Panel</h2>
-          <p class="dialog-description" id="dialog-body">Select an option to continue.</p>
-        </div>
-        <button id="dialog-close" class="dialog-close" type="button" aria-label="Close panel">×</button>
-      </div>
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Horror flash -->
+<div id="wrongline"></div>
+
+<!-- Main panel -->
+<div id="panel">
+  <div class="eyebrow" id="eyebrow">WNCORE · RELAY STATION 7</div>
+
+  <div class="title-wrap">
+    <div class="title-main" id="title-main">Drifter's<br>Tale</div>
+    <div class="title-sub">Another Sky · 2032</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-l">Signal</span>
+      <span class="stat-v">
+        <span class="sig-wrap">
+          <span class="sig-bars" id="sig-bars">
+            <span></span><span></span><span></span><span></span><span></span>
+          </span>
+          <span class="sig-pct" id="sig-pct">—%</span>
+        </span>
+      </span>
+    </div>
+    <div class="stat">
+      <span class="stat-l">Station</span>
+      <span class="stat-v" id="stat-station">R-23</span>
+    </div>
+    <div class="stat">
+      <span class="stat-l">Date</span>
+      <span class="stat-v" id="stat-date">——.——.2032</span>
+    </div>
+    <div class="stat">
+      <span class="stat-l">Time</span>
+      <span class="stat-v" id="stat-time">——:——</span>
     </div>
   </div>
 
-<script type="module">
-window.__DRIFTER_NO_AUTO_INIT__ = true;
-let realGameApp = null;
-let realGameReady = false;
+  <div class="nav-label">Select Access Node</div>
+  <nav id="main-nav">
+    <button class="nav-item active" data-action="new-game">
+      <span class="nav-marker"></span>
+      <span class="nav-text">New Game</span>
+    </button>
+    <button class="nav-item" data-action="continue">
+      <span class="nav-marker"></span>
+      <span class="nav-text">Continue</span>
+    </button>
+    <button class="nav-item" data-action="expedition">
+      <span class="nav-marker"></span>
+      <span class="nav-text">Expedition</span>
+    </button>
+    <button class="nav-item" data-action="archives">
+      <span class="nav-marker"></span>
+      <span class="nav-text">Archives</span>
+    </button>
+    <button class="nav-item" data-action="settings">
+      <span class="nav-marker"></span>
+      <span class="nav-text">Settings</span>
+    </button>
+    <button class="nav-item" data-action="credits">
+      <span class="nav-marker"></span>
+      <span class="nav-text">Credits</span>
+    </button>
+  </nav>
 
-const appLoader = import('./dist/ui/home-screen.js')
+  <div class="bottom">
+    <div class="tagline">The signal is weak,<br>but it's still calling.</div>
+    <div class="morse" id="morse">— — · — — —</div>
+  </div>
+</div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+let gameApp = null;       // HomeScreen instance once loaded
+let gameReady = false;    // true after HomeScreen constructed OK
+let audioCtx = null;
+let masterGain = null;
+let rainStarted = false;
+
+// ═══════════════════════════════════════════════════════════════════
+// BOOT — load HomeScreen module, fade boot overlay
+// ═══════════════════════════════════════════════════════════════════
+const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+import('./dist/ui/home-screen.js')
   .then(mod => {
     const HomeScreen = mod.HomeScreen;
-    if (!HomeScreen) {
-      console.error('HomeScreen module did not export HomeScreen');
-      return;
-    }
-    realGameApp = new HomeScreen('app');
-    realGameReady = true;
-    const appEl = document.getElementById('app');
-    if (appEl) appEl.style.display = 'none';
+    if (!HomeScreen) throw new Error('HomeScreen not exported');
+    gameApp = new HomeScreen('app');
+    gameReady = true;
   })
   .catch(err => {
-    console.error('Failed to load HomeScreen module', err);
+    // Game engine failed — menu still works standalone
+    console.warn('[DRIFTER] HomeScreen load failed:', err);
+  })
+  .finally(() => {
+    // Fade boot overlay regardless of engine result
+    const boot = document.getElementById('boot-overlay');
+    boot.classList.add('fade');
+    setTimeout(() => boot.remove(), 700);
   });
 
-function showGameApp() {
-  const appEl = document.getElementById('app');
-  const panelEl = document.getElementById('panel');
-  if (appEl) appEl.style.display = 'block';
-  if (panelEl) panelEl.style.display = 'none';
-}
-
-function showEngineLoading() {
-  let el = document.getElementById('engine-loading-toast');
-  if (el) return;
-  el = document.createElement('div');
-  el.id = 'engine-loading-toast';
-  el.style.cssText = `
-    position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
-    padding:10px 22px;background:rgba(4,8,15,0.92);
-    border:1px solid rgba(84,230,164,0.35);
-    font-family:'Share Tech Mono',monospace;font-size:0.64rem;
-    letter-spacing:0.2em;text-transform:uppercase;
-    color:rgba(84,230,164,0.8);z-index:99;
-    pointer-events:none;
-  `;
-  el.textContent = 'WNCORE · INITIALISING ENGINE…';
-  document.body.appendChild(el);
-  // auto-remove after engine is ready or 6s
-  const check = setInterval(() => {
-    if (realGameReady) { el.remove(); clearInterval(check); }
-  }, 200);
-  setTimeout(() => { el?.remove(); clearInterval(check); }, 6000);
-}
-
-async function startGame(mode) {
-  if (!realGameReady) {
-    showEngineLoading();
-    // Wait up to 8s for engine to be ready, then proceed
-    await new Promise(resolve => {
-      const poll = setInterval(() => {
-        if (realGameReady) { clearInterval(poll); resolve(); }
-      }, 100);
-      setTimeout(() => { clearInterval(poll); resolve(); }, 8000);
-    });
-    if (!realGameReady) return; // gave up
+// ═══════════════════════════════════════════════════════════════════
+// AUDIO HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function getAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.7;
+    masterGain.connect(audioCtx.destination);
   }
-  showGameApp();
-  if (mode === 'story') {
-    await realGameApp.launchStory();
-  } else {
-    await realGameApp.launchExploration();
-  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
 }
 
-function openGameSettings() {
-  if (!realGameReady) {
-    alert('Loading game engine, please wait...');
-    return;
-  }
-  showGameApp();
-  realGameApp.showSettings();
-}
-
-// ── Tick clock ────────────────────────────────────────────────────────────────
-(function tickClock() {
-  const dateEl = document.getElementById('stat-date');
-  const timeEl = document.getElementById('stat-time');
-
-  function getMenuDateTime() {
-    const storageKey = 'drifter-menu-current-date-v4';
-    const start = new Date(2032, 1, 7, 0, 0, 0);
-
-    sessionStorage.removeItem('drifter-menu-current-date-v2');
-    sessionStorage.removeItem('drifter-menu-current-date-v3');
-    sessionStorage.removeItem('drifter-menu-refresh-count');
-
-    const storedValue = sessionStorage.getItem(storageKey);
-    const parsed = storedValue ? new Date(storedValue) : null;
-    const displayDate = parsed && !Number.isNaN(parsed.getTime())
-      ? new Date(parsed)
-      : new Date(start);
-    const nextDate = new Date(displayDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-    sessionStorage.setItem(storageKey, nextDate.toISOString());
-
-    const hours = Math.floor(Math.random() * 24);
-    const minutes = Math.floor(Math.random() * 60);
-    const timeDate = new Date(displayDate);
-    timeDate.setHours(hours, minutes, 0, 0);
-
-    return {
-      date: `${String(displayDate.getDate()).padStart(2, '0')}.${String(displayDate.getMonth() + 1).padStart(2, '0')}.${displayDate.getFullYear()}`,
-      time: timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-  }
-
-  const initial = getMenuDateTime();
-  if (dateEl) dateEl.textContent = initial.date;
-  if (timeEl) timeEl.textContent = initial.time;
-
-  let colon = true;
-  let currentTime = initial.time;
-  const signalBars = Array.from(document.querySelectorAll('.signal-bar-inner span'));
-  let signalFrame = 0;
-
-  setInterval(() => {
-    colon = !colon;
-    if (timeEl) {
-      currentTime = currentTime.replace(/:/g, colon ? ':' : ' ');
-      timeEl.textContent = currentTime;
-    }
-  }, 900);
-
-  // Signal percent — drifts slowly, never reaches 0 or 100
-  const signalPctEl = document.getElementById('signal-pct');
-  const RELAY_LOCATIONS = [
-    'RELAY STATION 7', 'RELAY STATION 12', 'RELAY STATION 3',
-    'RELAY OUTPOST ECHO', 'RELAY STATION 19', 'RELAY OUTPOST NINER',
-  ];
-  const eyebrowEl = document.getElementById('station-eyebrow');
-  if (eyebrowEl) {
-    const loc = RELAY_LOCATIONS[Math.floor(Math.random() * RELAY_LOCATIONS.length)];
-    eyebrowEl.textContent = 'WNCORE · ' + loc;
-  }
-
-  let signalPct = 62 + Math.floor(Math.random() * 22); // 62-83%
-  let signalDir = Math.random() < 0.5 ? 1 : -1;
-
-  setInterval(() => {
-    signalFrame = (signalFrame + 1) % 4;
-    signalBars.forEach((bar, index) => {
-      const shouldActivate = index < 3 + (signalFrame % 2);
-      bar.classList.toggle('active', shouldActivate);
-    });
-    // Drift signal percent
-    signalPct += signalDir * (Math.random() < 0.3 ? (Math.random() < 0.5 ? 1 : -1) : 0);
-    if (signalPct >= 84) signalDir = -1;
-    if (signalPct <= 28) signalDir = 1;
-    if (signalPctEl) signalPctEl.textContent = signalPct + '%';
-  }, 500);
-})();
-
-// ── Nav focus ─────────────────────────────────────────────────────────────────
-const titleGlitchEl = document.getElementById('title-glitch');
-const glitchMessages = [
-  'YOU ARE STUCK HERE',
-  'ARE YOU REALLY HUMAN?',
-  'YOU ARE NOT FROM HERE',
-  'THE SIGNAL KNOWS YOU',
-  'THIS PLACE REMEMBERS',
-];
-
-function showTitleGlitch() {
-  if (!titleGlitchEl) return;
-  const message = glitchMessages[Math.floor(Math.random() * glitchMessages.length)];
-  titleGlitchEl.textContent = message;
-  titleGlitchEl.classList.remove('active');
-  void titleGlitchEl.offsetWidth;
-  titleGlitchEl.classList.add('active');
-  window.setTimeout(() => titleGlitchEl.classList.remove('active'), 1800);
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-// Archives reads real cross-run WorldInfoLayer deposits (localStorage) -
-// notes left behind by Drifters in previous runs. Per lore, not every
-// logbook can be trusted: the Counter-Drifter faction plants fakes.
-function buildArchivesBody() {
-  let deposits = [];
+function playTone() {
   try {
-    deposits = JSON.parse(localStorage.getItem('drifter_home_screen') || '[]');
-  } catch (e) {
-    deposits = [];
-  }
-  const advisory = '<div style="color:var(--dimmer);font-size:0.58rem;margin-top:10px;letter-spacing:0.14em;text-transform:uppercase;">WNCORE ADVISORY: not every logbook is genuine. Verify before you trust.</div>';
-  if (!Array.isArray(deposits) || deposits.length === 0) {
-    return '<div>No field logs on record. Deposits left behind by Drifters who made it back - or did not - will surface here as your runs accumulate.</div>' + advisory;
-  }
-  const rows = deposits.slice(-12).reverse().map(d => {
-    const region = d && d.region ? escapeHtml(d.region) : 'UNKNOWN REGION';
-    const zoneType = d && d.zoneType ? escapeHtml(String(d.zoneType).replace(/_/g, ' ')) : '';
-    const text = d && d.text ? escapeHtml(d.text) : '(illegible)';
-    return '<div style="margin-bottom:12px;">' +
-      '<div style="color:var(--dim);font-size:0.58rem;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2px;">' + region + (zoneType ? ' / ' + zoneType : '') + '</div>' +
-      '<div>' + text + '</div>' +
-      '</div>';
-  }).join('');
-  return rows + advisory;
+    const ctx = getAudio();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(820, now);
+    osc.frequency.exponentialRampToValueAtTime(660, now + 0.09);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.03, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(now); osc.stop(now + 0.14);
+  } catch(e) {}
 }
 
-const panelDefinitions = {
+function startAmbient() {
+  if (rainStarted) return;
+  rainStarted = true;
+  try {
+    const ctx = getAudio();
+    // Rain noise
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 3500;
+    const rg = ctx.createGain(); rg.gain.value = 0.035;
+    src.connect(hp); hp.connect(lp); lp.connect(rg); rg.connect(masterGain);
+    src.start();
+    // Low drone
+    const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 46;
+    const og = ctx.createGain(); og.gain.value = 0.012;
+    o1.connect(og); og.connect(masterGain); o1.start();
+  } catch(e) {}
+}
+
+function playThunder() {
+  try {
+    const ctx = getAudio();
+    const len = ctx.sampleRate * 3;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(Math.max(0,1-i/len), 0.45);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
+    const g = ctx.createGain();
+    const now = ctx.currentTime;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.22, now + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 3);
+    src.connect(lp); lp.connect(g); g.connect(masterGain);
+    src.start(); src.stop(now + 3);
+  } catch(e) {}
+}
+
+document.addEventListener('click',   () => startAmbient(), { once: true });
+document.addEventListener('keydown', () => startAmbient(), { once: true });
+
+// ═══════════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), dur);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// GAME LAUNCH
+// ═══════════════════════════════════════════════════════════════════
+function showApp() {
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('panel').style.display = 'none';
+}
+
+function hideApp() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('panel').style.display = 'flex';
+}
+
+async function launch(mode) {
+  if (!gameReady) {
+    if (!gameApp) {
+      showToast('ENGINE NOT AVAILABLE · STANDALONE MODE');
+      return;
+    }
+    // Still loading — wait up to 8s
+    showToast('WNCORE · INITIALISING ENGINE…', 8000);
+    await new Promise(resolve => {
+      const t = setInterval(() => { if (gameReady) { clearInterval(t); resolve(); }}, 100);
+      setTimeout(() => { clearInterval(t); resolve(); }, 8000);
+    });
+    if (!gameReady) { showToast('ENGINE TIMEOUT · TRY AGAIN'); return; }
+  }
+  showApp();
+  try {
+    if (mode === 'story')       await gameApp.launchStory();
+    else if (mode === 'settings') gameApp.showSettings();
+    else                          await gameApp.launchExploration();
+  } catch (err) {
+    console.error('[DRIFTER] Launch error:', err);
+    showToast('SIGNAL LOST · RETURNING TO RELAY');
+    hideApp();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DIALOG
+// ═══════════════════════════════════════════════════════════════════
+const DIALOG_CONTENT = {
   continue: {
-    title: 'Continue Expedition',
-    body: 'Resume your last run. The relay held the signal while you were gone.'
-  },
-  'new-game': {
-    title: 'New Structured Run',
-    body: 'Deploy a Drifter into a fixed-origin zone. Structured narrative. One shot. The logbook starts clean.'
+    title: 'Continue',
+    body:  'Resume your last expedition. The relay held the signal while you were gone.'
   },
   expedition: {
-    title: 'Open Run',
-    body: 'Procedural zone. Fresh Drifter drawn from the roster. Move quietly, catalog what you find, extract before the signal drops. No two runs the same.'
+    title: 'Expedition Run',
+    body:  'Procedural zone. Fresh Drifter drawn from the roster. Move quietly. Catalog what you find. Extract before the signal drops. No two runs the same.'
   },
   archives: {
     title: 'Archives',
-    body: ''
-  },
-  settings: {
-    title: 'Relay Configuration',
-    body: 'Adjust audio, difficulty, and display settings.'
+    body:  () => buildArchives()
   },
   credits: {
     title: 'Credits',
-    body: 'DRIFTER\'S TALE - an Another Sky story. Design, writing and direction by Siharu. Built with TypeScript and Three.js. Broadcast maintained from WNCORE Relay Station 7. The signal is weak, but it\'s still calling.'
+    body:  "DRIFTER'S TALE — an Another Sky story.\n\nDesign, writing, and direction by Siharu.\nBuilt with TypeScript and Three.js.\n\nBroadcast maintained from WNCORE Relay Station 7.\n\nThe signal is weak, but it's still calling."
   }
 };
-const overlayEl = document.getElementById('dialog-overlay');
-const overlayTitle = document.getElementById('dialog-title');
-const overlayBody = document.getElementById('dialog-body');
-const overlayClose = document.getElementById('dialog-close');
 
-function openPanel(action) {
-  const def = panelDefinitions[action];
+function buildArchives() {
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem('drifter_home_screen') || '[]'); } catch(e) {}
+  if (!Array.isArray(logs) || !logs.length) {
+    return 'No field logs on record. Deposits left behind by Drifters who made it back — or did not — will surface here as runs accumulate.\n\nWNCORE ADVISORY: not every logbook is genuine.';
+  }
+  return logs.slice(-10).reverse().map(d => {
+    const r = d?.region || 'UNKNOWN REGION';
+    const t = d?.text   || '(illegible)';
+    return `[${r}]\n${t}`;
+  }).join('\n\n') + '\n\nWNCORE ADVISORY: not every logbook is genuine.';
+}
+
+function openDialog(key) {
+  const def = DIALOG_CONTENT[key];
   if (!def) return;
-  overlayTitle.textContent = def.title;
-  if (action === 'archives') { overlayBody.innerHTML = buildArchivesBody(); } else { overlayBody.textContent = def.body; }
-  overlayEl.style.display = 'flex';
-  overlayClose.focus();
-}
-function closePanel() {
-  overlayEl.style.display = 'none';
+  const body = typeof def.body === 'function' ? def.body() : def.body;
+  document.getElementById('dlg-title').textContent = def.title;
+  // preserve newlines
+  const bodyEl = document.getElementById('dlg-body');
+  bodyEl.innerHTML = body.replace(/\n/g, '<br>');
+  document.getElementById('dialog').classList.add('open');
+  document.getElementById('dlg-close').focus();
 }
 
-overlayClose.addEventListener('click', closePanel);
-overlayEl.addEventListener('click', e => {
-  if (e.target === overlayEl) closePanel();
+function closeDialog() {
+  document.getElementById('dialog').classList.remove('open');
+}
+
+document.getElementById('dlg-close').addEventListener('click', closeDialog);
+document.getElementById('dialog').addEventListener('click', e => {
+  if (e.target === document.getElementById('dialog')) closeDialog();
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && overlayEl.style.display === 'flex') closePanel();
+  if (e.key === 'Escape') closeDialog();
 });
 
-// Module-scope stub — will be replaced by initStorm once audio initialises
-let playMenuTone = function() {};
-
+// ═══════════════════════════════════════════════════════════════════
+// NAV CLICK HANDLER
+// ═══════════════════════════════════════════════════════════════════
 document.getElementById('main-nav').addEventListener('click', e => {
   const btn = e.target.closest('.nav-item');
   if (!btn || btn.classList.contains('disabled')) return;
+
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
+  playTone();
+
   const action = btn.dataset.action;
-  playMenuTone();
-  if (action === 'continue') {
-    startGame('exploration');
-  } else if (action === 'new-game') {
-    startGame('story');
-  } else if (action === 'expedition') {
-    startGame('exploration');
-  } else if (action === 'settings') {
-    openGameSettings();
-  } else {
-    openPanel(action);
+  switch(action) {
+    case 'new-game':    launch('story');       break;
+    case 'continue':    launch('exploration'); break;
+    case 'expedition':  launch('exploration'); break;
+    case 'settings':    launch('settings');    break;
+    default:            openDialog(action);    break;
   }
 });
+
+// Keyboard nav
 document.addEventListener('keydown', e => {
+  if (document.getElementById('dialog').classList.contains('open')) return;
   const items = [...document.querySelectorAll('.nav-item:not(.disabled)')];
   const cur = items.findIndex(i => i.classList.contains('active'));
   if (e.key === 'ArrowDown') {
+    e.preventDefault();
     const next = items[(cur + 1) % items.length];
     items.forEach(i => i.classList.remove('active'));
-    next.classList.add('active');
-    next.focus();
-    e.preventDefault();
+    next.classList.add('active'); next.focus();
   } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
     const prev = items[(cur - 1 + items.length) % items.length];
     items.forEach(i => i.classList.remove('active'));
-    prev.classList.add('active');
-    prev.focus();
-    e.preventDefault();
-  } else if (e.key === 'Enter' || e.key === ' ') {
-    const active = items[cur];
-    if (active) {
-      active.click();
-      e.preventDefault();
-    }
+    prev.classList.add('active'); prev.focus();
+  } else if ((e.key === 'Enter' || e.key === ' ') && cur >= 0) {
+    e.preventDefault(); items[cur].click();
   }
 });
 
-// ── Rain canvas ───────────────────────────────────────────────────────────────
-(function initRain() {
-  const canvas = document.getElementById('rain-canvas');
-  const ctx = canvas.getContext('2d');
+// ═══════════════════════════════════════════════════════════════════
+// CLOCK + SIGNAL
+// ═══════════════════════════════════════════════════════════════════
+(function clock() {
+  const STATIONS = [
+    'RELAY STATION 3', 'RELAY STATION 7', 'RELAY STATION 12',
+    'RELAY OUTPOST ECHO', 'RELAY OUTPOST NINER', 'RELAY STATION 19',
+  ];
+  document.getElementById('eyebrow').textContent =
+    'WNCORE · ' + STATIONS[Math.floor(Math.random() * STATIONS.length)];
 
-  let W, H;
-  const drops = [];
-  const DROP_COUNT = 420;
+  // In-world date — advances each session
+  const KEY = 'drifter-menu-date-v5';
+  const start = new Date(2032, 1, 7);
+  let stored = null;
+  try { stored = new Date(sessionStorage.getItem(KEY)); } catch(e){}
+  const now = (stored && !isNaN(stored)) ? stored : new Date(start);
+  const next = new Date(now); next.setDate(next.getDate() + 1);
+  try { sessionStorage.setItem(KEY, next.toISOString()); } catch(e){}
+
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('stat-date').textContent = `${dd}.${mm}.${now.getFullYear()}`;
+
+  const h = String(Math.floor(Math.random()*24)).padStart(2,'0');
+  const m = String(Math.floor(Math.random()*60)).padStart(2,'0');
+  let timeStr = `${h}:${m}`;
+  document.getElementById('stat-time').textContent = timeStr;
+
+  // Blink colon
+  setInterval(() => {
+    timeStr = timeStr.includes(':') ? timeStr.replace(':','·') : timeStr.replace('·',':');
+    document.getElementById('stat-time').textContent = timeStr;
+  }, 950);
+
+  // Signal strength — drifts
+  let sigPct = 55 + Math.floor(Math.random() * 30);
+  let sigDir = 1;
+  const bars = document.querySelectorAll('.sig-bars span');
+  function updateSig() {
+    sigPct += sigDir * (Math.random() < 0.4 ? (Math.random() < 0.5 ? 1 : -1) : 0);
+    sigPct = Math.max(20, Math.min(89, sigPct));
+    if (sigPct >= 85) sigDir = -1;
+    if (sigPct <= 22) sigDir =  1;
+    document.getElementById('sig-pct').textContent = sigPct + '%';
+    const lit = Math.round((sigPct / 100) * 5);
+    bars.forEach((b, i) => b.classList.toggle('lit', i < lit));
+  }
+  updateSig();
+  setInterval(updateSig, 600);
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// RAIN CANVAS
+// ═══════════════════════════════════════════════════════════════════
+(function rain() {
+  const canvas = document.getElementById('rain');
+  const ctx = canvas.getContext('2d');
+  let W, H, drops = [];
+  const N = 380;
+  const ANGLE = Math.PI / 2 + 0.28;
 
   function resize() {
     W = canvas.width = window.innerWidth;
     H = canvas.height = window.innerHeight;
+    drops = Array.from({length: N}, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      len: 10 + Math.random() * 20,
+      spd: 12 + Math.random() * 16,
+      op:  0.06 + Math.random() * 0.18,
+      w:   0.4 + Math.random() * 0.7,
+    }));
   }
   resize();
   window.addEventListener('resize', resize);
 
-  function makeDrops() {
-    drops.length = 0;
-    for (let i = 0; i < DROP_COUNT; i++) {
-      drops.push({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        len: 10 + Math.random() * 22,
-        speed: 14 + Math.random() * 18,
-        opacity: 0.08 + Math.random() * 0.22,
-        width: 0.5 + Math.random() * 0.8,
-      });
-    }
-  }
-  makeDrops();
-  window.addEventListener('resize', makeDrops);
-
-  const ANGLE = Math.PI / 2 + 0.32; // slight diagonal
-
+  const CX = Math.cos(ANGLE), SY = Math.sin(ANGLE);
   let last = 0;
   function frame(ts) {
-    const dt = Math.min((ts - last) / 1000, 0.05);
-    last = ts;
-
+    const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
     ctx.clearRect(0, 0, W, H);
-
     for (const d of drops) {
-      d.x += Math.cos(ANGLE) * d.speed * dt * 60 * 0.08;
-      d.y += Math.sin(ANGLE) * d.speed * dt * 60 * 0.14;
-
+      d.x += CX * d.spd * dt * 60 * 0.09;
+      d.y += SY * d.spd * dt * 60 * 0.15;
       if (d.y > H + 30) { d.y = -30; d.x = Math.random() * W; }
       if (d.x > W + 10) { d.x = -10; }
-
       ctx.beginPath();
-      ctx.strokeStyle = `rgba(160,180,210,${d.opacity})`;
-      ctx.lineWidth = d.width;
+      ctx.strokeStyle = `rgba(155,175,205,${d.op})`;
+      ctx.lineWidth = d.w;
       ctx.moveTo(d.x, d.y);
-      ctx.lineTo(
-        d.x + Math.cos(ANGLE) * d.len,
-        d.y + Math.sin(ANGLE) * d.len
-      );
+      ctx.lineTo(d.x + CX * d.len, d.y + SY * d.len);
       ctx.stroke();
     }
-
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 })();
 
-// ── Noise canvas ──────────────────────────────────────────────────────────────
-(function initNoise() {
+// ═══════════════════════════════════════════════════════════════════
+// NOISE CANVAS
+// ═══════════════════════════════════════════════════════════════════
+(function noise() {
   const c = document.getElementById('noise');
-  c.width = 200; c.height = 200;
-  c.style.width = '100%'; c.style.height = '100%';
   const ctx = c.getContext('2d');
-
-  function refreshNoise() {
+  function tick() {
     const img = ctx.createImageData(200, 200);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = Math.random() * 255 | 0;
@@ -1125,376 +742,95 @@ document.addEventListener('keydown', e => {
     }
     ctx.putImageData(img, 0, 0);
   }
-  refreshNoise();
-  setInterval(refreshNoise, 110);
+  tick(); setInterval(tick, 120);
 })();
 
-// ── Lightning + Thunder (Web Audio) ──────────────────────────────────────────
-(function initStorm() {
-  const lightningEl = document.getElementById('lightning');
-  let audioCtx = null;
-  let masterGain = null;
-  let rainGain = null;
-  let ambientGain = null;
-  let rainStarted = false;
+// ═══════════════════════════════════════════════════════════════════
+// LIGHTNING
+// ═══════════════════════════════════════════════════════════════════
+(function lightning() {
+  const el = document.getElementById('lightning');
+  const title = document.getElementById('title-main');
 
-  function getAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      masterGain = audioCtx.createGain();
-      let savedVolume = 0.8;
-      try {
-        const rawSettings = localStorage.getItem('drifter-settings-v1');
-        if (rawSettings) {
-          const parsedSettings = JSON.parse(rawSettings);
-          if (parsedSettings && typeof parsedSettings.volume === 'number') {
-            savedVolume = Math.max(0, Math.min(1, parsedSettings.volume));
-          }
-        }
-      } catch (e) { /* keep default */ }
-      masterGain.gain.value = savedVolume;
-      masterGain.connect(audioCtx.destination);
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
-  }
-
-  playMenuTone = function() {
-    let ctx;
-    try { ctx = getAudio(); } catch (e) { return; }
-    const now = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(760, now);
-    osc.frequency.exponentialRampToValueAtTime(640, now + 0.08);
-
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.025, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
-
-    osc.connect(gain);
-    gain.connect(masterGain);
-    osc.start(now);
-    osc.stop(now + 0.15);
-  };
-
-  function playThunder(delay = 0) {
-    let ctx;
-    try { ctx = getAudio(); } catch (e) { return; }
-
-    setTimeout(() => {
-      const bufLen = ctx.sampleRate * 2.8;
-      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < bufLen; i++) {
-        data[i] = (Math.random() * 2 - 1) *
-          Math.pow(Math.max(0, 1 - i / bufLen), 0.4) *
-          (0.7 + 0.3 * Math.random());
-      }
-
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = 280;
-      lp.Q.value = 0.7;
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.24, ctx.currentTime + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.8);
-
-      src.connect(lp);
-      lp.connect(gain);
-      gain.connect(masterGain);
-      src.start();
-      src.stop(ctx.currentTime + 2.8);
-    }, delay);
-  }
-
-  function playRain() {
-    let ctx;
-    try { ctx = getAudio(); } catch (e) { return; }
-
-    const bufLen = ctx.sampleRate * 3;
-    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
-
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-
-    const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 1800;
-
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 3200;
-
-    const lfo = ctx.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.value = 0.18;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.008;
-    lfo.connect(lfoGain);
-
-    rainGain = ctx.createGain();
-    rainGain.gain.value = 0.04;
-
-    lfoGain.connect(rainGain.gain);
-    lfo.start();
-
-    src.connect(hp); hp.connect(lp); lp.connect(rainGain); rainGain.connect(masterGain);
-    src.start();
-    return rainGain;
-  }
-
-  function playAmbient() {
-    let ctx;
-    try { ctx = getAudio(); } catch (e) { return; }
-
-    const now = ctx.currentTime;
-    const osc1 = ctx.createOscillator();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(48, now);
-    const gain1 = ctx.createGain();
-    gain1.gain.setValueAtTime(0.0001, now);
-    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-
-    const osc2 = ctx.createOscillator();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(72, now);
-    const gain2 = ctx.createGain();
-    gain2.gain.setValueAtTime(0.0001, now);
-    gain2.gain.exponentialRampToValueAtTime(0.008, now + 0.8);
-
-    const lowpass = ctx.createBiquadFilter();
-    lowpass.type = 'lowpass';
-    lowpass.frequency.value = 140;
-
-    ambientGain = ctx.createGain();
-    ambientGain.gain.value = 0.14;
-    osc1.connect(gain1); gain1.connect(lowpass); lowpass.connect(ambientGain); ambientGain.connect(masterGain);
-    osc2.connect(gain2); gain2.connect(lowpass); lowpass.connect(ambientGain); ambientGain.connect(masterGain);
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 30);
-    osc2.stop(now + 30);
-  }
-
-  function startAudio() {
-    if (rainStarted) return;
-    rainStarted = true;
-    playRain();
-    playAmbient();
-  }
-
-  function doLightningFlash() {
-    // multi-stroke flash
-    const strokes = [
-      { t: 0,    o: 0.55, d: 40  },
-      { t: 50,   o: 0.1,  d: 30  },
-      { t: 90,   o: 0.72, d: 60  },
-      { t: 160,  o: 0,    d: 200 },
-    ];
-    const flashStart = 0;
+  function flash() {
+    const strokes = [{t:0,o:0.5},{t:55,o:0.08},{t:95,o:0.65},{t:170,o:0}];
     for (const s of strokes) {
       setTimeout(() => {
-        lightningEl.style.background = `rgba(210, 225, 255, ${s.o})`;
+        el.style.background = `rgba(210,225,255,${s.o})`;
         if (s.o > 0.3) {
-          showTitleGlitch();
+          title.classList.remove('glitch');
+          void title.offsetWidth;
+          title.classList.add('glitch');
         }
-        setTimeout(() => { lightningEl.style.background = 'rgba(200,220,255,0)'; }, s.d);
+        setTimeout(() => el.style.background = 'rgba(200,220,255,0)', 45);
       }, s.t);
     }
-    const thunderDelay = 800 + Math.random() * 1200;
-    playThunder(thunderDelay);
+    setTimeout(() => playThunder(), 900 + Math.random() * 1200);
   }
 
-  // Schedule random lightning
-  function scheduleNextLightning() {
-    const interval = 4000 + Math.random() * 14000;
-    setTimeout(() => {
-      doLightningFlash();
-      scheduleNextLightning();
-    }, interval);
+  function schedule() {
+    setTimeout(() => { flash(); schedule(); }, 5000 + Math.random() * 13000);
   }
-
-  // Start audio on first interaction (browser autoplay policy)
-  document.addEventListener('click', startAudio, { once: true });
-  document.addEventListener('keydown', startAudio, { once: true });
-
-  // Lightning starts immediately (visual only until user interacts for audio)
-  setTimeout(scheduleNextLightning, 1500 + Math.random() * 3000);
+  setTimeout(schedule, 2000 + Math.random() * 3000);
 })();
 
-// ── Morse line flicker ────────────────────────────────────────────────────────
-(function morseFlicker() {
-  const sequences = [
-    '— — · — — —',
-    '· · — · · ·',
-    '— — · · — ·',
-    '· · — · — ·',
-  ];
-  const el = document.getElementById('morse-line');
+// ═══════════════════════════════════════════════════════════════════
+// MORSE FLICKER
+// ═══════════════════════════════════════════════════════════════════
+(function morse() {
+  const seqs = ['— — · — — —','· · — · · ·','— — · · — ·','· · — · — ·'];
+  const el = document.getElementById('morse');
   let i = 0;
   setInterval(() => {
-    i = (i + 1) % sequences.length;
-    el.style.opacity = '0.2';
-    setTimeout(() => {
-      el.textContent = sequences[i];
-      el.style.opacity = '0.6';
-    }, 200);
-  }, 4800);
+    i = (i + 1) % seqs.length;
+    el.style.opacity = '0';
+    setTimeout(() => { el.textContent = seqs[i]; el.style.opacity = '0.45'; }, 180);
+  }, 5200);
 })();
 
-// ── Horror layer ─────────────────────────────────────────────────────────────
-(function horrorLayer() {
-  const wrongLine    = document.getElementById('wrong-line');
-  const wrongEye     = document.getElementById('wrong-eye');
-  const staticBurst  = document.getElementById('static-burst');
-  const taglineEl    = document.querySelector('.tagline');
-  const morseEl      = document.getElementById('morse-line');
-  const stationEl    = document.getElementById('stat-station');
-  const signalInner  = document.querySelector('.signal-bar-inner');
-
-  // Wrong messages — read like a transmission bleed
-  const wrongMessages = [
-    'SIGNAL ORIGIN: UNKNOWN',
-    'DRIFTER COUNT: 0',
-    'THEY ARE STILL OUT THERE',
-    'DO NOT OPEN THE LOGBOOK',
-    'YOU HAVE BEEN HERE BEFORE',
-    'THE RELAY IS NOT ALONE',
-    'SIGNAL CLASSIFIED',
-    'STOP LOOKING',
-    'IT REMEMBERS YOUR FACE',
+// ═══════════════════════════════════════════════════════════════════
+// HORROR LAYER
+// ═══════════════════════════════════════════════════════════════════
+(function horror() {
+  const wl = document.getElementById('wrongline');
+  const msgs = [
+    'SIGNAL ORIGIN: UNKNOWN','DRIFTER COUNT: 0',
+    'THEY ARE STILL OUT THERE','DO NOT OPEN THE LOGBOOK',
+    'YOU HAVE BEEN HERE BEFORE','THE RELAY IS NOT ALONE',
+    'STOP LOOKING','IT REMEMBERS YOUR FACE',
   ];
 
-  // 1. Wrong line — appears bottom-right, holds briefly, fades
-  function flashWrongLine() {
-    if (!wrongLine) return;
-    wrongLine.textContent = wrongMessages[Math.floor(Math.random() * wrongMessages.length)];
-    wrongLine.classList.add('visible');
-    setTimeout(() => wrongLine.classList.remove('visible'), 1400 + Math.random() * 600);
+  function wrongFlash() {
+    wl.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    wl.classList.add('on');
+    setTimeout(() => wl.classList.remove('on'), 1200 + Math.random() * 600);
   }
 
-  // 2. The eye — appears at screen edge for ~800ms, gone
-  function flashEye() {
-    if (!wrongEye) return;
-    wrongEye.classList.add('visible');
-    setTimeout(() => wrongEye.classList.remove('visible'), 700 + Math.random() * 400);
-  }
-
-  // 3. Static burst — one frame of visual noise
-  function doStaticBurst() {
-    if (!staticBurst) return;
-    staticBurst.style.opacity = String(0.06 + Math.random() * 0.08);
-    setTimeout(() => { staticBurst.style.opacity = '0'; }, 80 + Math.random() * 60);
-  }
-
-  // 4. Tagline briefly corrupts
-  function corruptTagline() {
-    if (!taglineEl) return;
-    taglineEl.classList.add('tagline-corrupt');
-    taglineEl.textContent = 'THE SIGNAL HAS BEEN CALLING\nLONGER THAN YOU THINK.';
-    setTimeout(() => {
-      taglineEl.classList.remove('tagline-corrupt');
-      taglineEl.innerHTML = 'The signal is weak,<br>but it\'s still calling.';
-    }, 900);
-  }
-
-  // 5. Signal bar drops to dead, recovers
-  function dropSignal() {
-    if (!signalInner) return;
-    signalInner.classList.add('dead');
-    setTimeout(() => signalInner.classList.remove('dead'), 600 + Math.random() * 400);
-  }
-
-  // 6. Station ID briefly wrong
   function corruptStation() {
-    if (!stationEl) return;
-    const origText = stationEl.textContent;
-    stationEl.textContent = '???';
-    stationEl.classList.add('corrupt');
-    setTimeout(() => {
-      stationEl.textContent = origText;
-      stationEl.classList.remove('corrupt');
-    }, 500 + Math.random() * 300);
+    const el = document.getElementById('stat-station');
+    const orig = el.textContent;
+    el.textContent = '???';
+    el.style.color = 'rgba(192,57,43,0.8)';
+    setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 500 + Math.random()*300);
   }
 
-  // 7. A random nav item briefly goes red, as if selected by something else
-  function cursedNavFlicker() {
-    const items = Array.from(document.querySelectorAll('.nav-item:not(.disabled):not(.active)'));
+  function cursedNav() {
+    const items = [...document.querySelectorAll('.nav-item:not(.active)')];
     if (!items.length) return;
-    const target = items[Math.floor(Math.random() * items.length)];
-    target.classList.add('cursed');
-    setTimeout(() => target.classList.remove('cursed'), 350 + Math.random() * 200);
+    const t = items[Math.floor(Math.random() * items.length)];
+    t.querySelector('.nav-text').style.color = 'rgba(192,57,43,0.65)';
+    setTimeout(() => { t.querySelector('.nav-text').style.color = ''; }, 400 + Math.random()*200);
   }
 
-  // 8. Morse line gets a wrong character injected
-  function wrongMorse() {
-    if (!morseEl) return;
-    const orig = morseEl.textContent;
-    const wrongChars = ['· · · — — —', '— — — · · ·', '· — · — · —', '... --- ...'];
-    morseEl.textContent = wrongChars[Math.floor(Math.random() * wrongChars.length)];
-    morseEl.classList.add('morse-wrong');
+  const events = [wrongFlash, wrongFlash, wrongFlash, corruptStation, corruptStation, cursedNav];
+  function schedule() {
     setTimeout(() => {
-      morseEl.textContent = orig;
-      morseEl.classList.remove('morse-wrong');
-    }, 600 + Math.random() * 200);
+      events[Math.floor(Math.random() * events.length)]();
+      if (Math.random() < 0.2) setTimeout(() => events[Math.floor(Math.random() * events.length)](), 400);
+      schedule();
+    }, 5000 + Math.random() * 12000);
   }
-
-  // All possible events with relative weights
-  const events = [
-    { fn: flashWrongLine,   weight: 5 },
-    { fn: doStaticBurst,    weight: 6 },
-    { fn: dropSignal,       weight: 4 },
-    { fn: cursedNavFlicker, weight: 3 },
-    { fn: wrongMorse,       weight: 3 },
-    { fn: corruptStation,   weight: 2 },
-    { fn: flashEye,         weight: 2 },
-    { fn: corruptTagline,   weight: 1 },
-  ];
-  const pool = events.flatMap(e => Array(e.weight).fill(e.fn));
-
-  function pickEvent() {
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
-  function scheduleNext() {
-    // Between 4s and 14s — irregular enough to feel wrong, not so frequent it becomes noise
-    const delay = 4000 + Math.random() * 10000;
-    setTimeout(() => {
-      pickEvent()();
-      // Occasionally fire a second event close behind the first
-      if (Math.random() < 0.25) {
-        setTimeout(() => pickEvent()(), 300 + Math.random() * 600);
-      }
-      scheduleNext();
-    }, delay);
-  }
-
-  // First event fires after 6–12s — let the player settle before anything happens
-  setTimeout(() => {
-    scheduleNext();
-  }, 6000 + Math.random() * 6000);
-
-  // Extra: on any mousemove, tiny chance of single static burst (cursor awareness)
-  let lastMove = 0;
-  document.addEventListener('mousemove', () => {
-    const now = Date.now();
-    if (now - lastMove < 3000) return;
-    if (Math.random() < 0.04) {
-      lastMove = now;
-      doStaticBurst();
-    }
-  });
+  setTimeout(schedule, 8000 + Math.random() * 8000);
 })();
 </script>
 </body>

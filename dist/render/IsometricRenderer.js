@@ -20,7 +20,7 @@
  * rotation, per the locked DRIFTER lore/build decisions (non-rotating
  * camera was an explicit call in the player sprite system too).
  */
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { PixelPipeline } from './PixelPipeline.js';
 import { LightingController } from './LightingController.js';
 import { GodRayLayer } from './GodRayLayer.js';

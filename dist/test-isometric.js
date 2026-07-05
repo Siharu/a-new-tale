@@ -10,7 +10,7 @@
  *
  * Run with: npx vite
  */
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { IsometricRenderer } from './render/IsometricRenderer.js';
 import { SkySystem, WrongnessState } from './render/SkySystem.js';
 const canvas = document.createElement('canvas');

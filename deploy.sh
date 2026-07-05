@@ -1,174 +1,67 @@
 #!/usr/bin/env bash
-# ─────────────────────────────────────────────────────────────────────────────
-# DRIFTER deploy.sh
-# Drop drifter-s-tale-fixed.zip in the repo root, then run:
-#   bash deploy.sh
-# ─────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# DRIFTER'S TALE — deploy script
+# Usage: bash deploy.sh [path/to/update.zip]
+# If no zip is given, just repacks and deploys current state.
+# ─────────────────────────────────────────────────────────────
 set -e
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+ZIP_FILE="${1:-}"
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ZIP_NAME="drifter-s-tale-fixed.zip"
-ZIP_PATH="$REPO_ROOT/$ZIP_NAME"
-TMP_DIR="$REPO_ROOT/.deploy_tmp"
+echo "═══════════════════════════════════════"
+echo "  WNCORE · DRIFTER DEPLOY"
+echo "═══════════════════════════════════════"
 
-# ── colour helpers ────────────────────────────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
-ok()   { echo -e "${GREEN}✓${NC} $1"; }
-info() { echo -e "${YELLOW}→${NC} $1"; }
-fail() { echo -e "${RED}✗${NC} $1"; exit 1; }
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  DRIFTER — deploy script"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-# ── 1. sanity check ───────────────────────────────────────────────────────────
-[[ -f "$ZIP_PATH" ]] || fail "Could not find $ZIP_NAME in repo root ($REPO_ROOT)"
-command -v unzip &>/dev/null || fail "unzip not found — run: sudo apt-get install -y unzip"
-command -v npm   &>/dev/null || fail "npm not found"
-ok "Found $ZIP_NAME"
-
-# ── 2. extract to temp ────────────────────────────────────────────────────────
-info "Extracting zip..."
-rm -rf "$TMP_DIR"
-mkdir -p "$TMP_DIR"
-unzip -q "$ZIP_PATH" -d "$TMP_DIR"
-
-# handle single wrapper folder (zip may be repo/ or drifter-s-tale-main/ etc.)
-EXTRACT_ROOT="$TMP_DIR"
-ENTRIES=("$TMP_DIR"/*)
-if [[ ${#ENTRIES[@]} -eq 1 && -d "${ENTRIES[0]}" ]]; then
-  EXTRACT_ROOT="${ENTRIES[0]}"
-  info "Detected wrapper folder: $(basename "$EXTRACT_ROOT")"
-fi
-ok "Extracted to temp dir"
-
-# ── 3. ensure all required folders exist ─────────────────────────────────────
-info "Creating folder structure..."
-DIRS=(
-  src/data/npc_scripts
-  src/data/world_info
-  src/gameplay
-  src/render
-  src/ui
-  assets/audio/music/ambient
-  assets/audio/music/extraction
-  assets/audio/music/tension
-  assets/audio/sfx/footsteps
-  assets/audio/sfx/hazard
-  assets/audio/sfx/radio
-  assets/audio/sfx/ui
-  assets/audio/voice
-  assets/buildings/generated_cache
-  assets/buildings/templates
-  "assets/buildings/tiles/floors"
-  assets/characters/drifter/base
-  assets/characters/drifter/variants
-  assets/characters/husks/isometric/shambler
-  assets/characters/husks/isometric/sprinter
-  assets/characters/husks/isometric/bloated
-  assets/characters/husks/silhouettes
-  assets/fx/noise
-  assets/fx/particles
-  assets/items
-  assets/props
-  assets/tiles/ground
-  assets/tiles/ground_sliced
-  assets/tiles/road
-  assets/tiles/rubble
-  "assets/ui/fonts/gameicons"
-  assets/ui/hud
-  assets/ui/logbook
-  "assets/ui/menubackground/background 1"
-  "assets/ui/menubackground/background 2"
-  "assets/ui/menubackground/background 3"
-  "assets/ui/menubackground/background 4"
-  assets/weapons/meleeweps
-  dist
-  ui
-)
-for dir in "${DIRS[@]}"; do
-  mkdir -p "$REPO_ROOT/$dir"
-done
-ok "Folder structure ready"
-
-# ── 4. copy src files (always overwrite) ─────────────────────────────────────
-info "Copying source files..."
-if [[ -d "$EXTRACT_ROOT/src" ]]; then
-  cp -r "$EXTRACT_ROOT/src/." "$REPO_ROOT/src/"
-  ok "src/ updated"
-else
-  echo "  (no src/ in zip — skipping)"
-fi
-
-# ── 5. copy config / root files (overwrite) ──────────────────────────────────
-info "Copying root config files..."
-ROOT_FILES=(
-  package.json
-  tsconfig.json
-  vercel.json
-  index.html
-  test-browser.html
-  test.mjs
-  setup-data-folder.sh
-  slice-tiles.py
-  sort-tiles.sh
-  SETUP_README.md
-  .gitignore
-  .devcontainer/devcontainer.json
-)
-for f in "${ROOT_FILES[@]}"; do
-  src="$EXTRACT_ROOT/$f"
-  dst="$REPO_ROOT/$f"
-  if [[ -f "$src" ]]; then
-    mkdir -p "$(dirname "$dst")"
-    cp "$src" "$dst"
+# ── 1. Unpack update zip if provided ────────────────────────
+if [ -n "$ZIP_FILE" ]; then
+  if [ ! -f "$ZIP_FILE" ]; then
+    echo "[ERROR] Zip not found: $ZIP_FILE"; exit 1
   fi
-done
-ok "Root config files updated"
-
-# ── 6. copy assets (only overwrite existing, never wipe whole folder) ─────────
-info "Merging assets..."
-if [[ -d "$EXTRACT_ROOT/assets" ]]; then
-  # rsync-style: copy everything from zip assets into repo assets, keep extras
-  cp -rn "$EXTRACT_ROOT/assets/." "$REPO_ROOT/assets/" 2>/dev/null || true
-  # force-overwrite tile/item/weapon PNGs since those may have changed
-  for subdir in tiles items weapons/meleeweps "ui/menubackground" "ui/fonts/gameicons" "buildings/tiles"; do
-    src_dir="$EXTRACT_ROOT/assets/$subdir"
-    dst_dir="$REPO_ROOT/assets/$subdir"
-    if [[ -d "$src_dir" ]]; then
-      mkdir -p "$dst_dir"
-      cp -r "$src_dir/." "$dst_dir/"
-    fi
-  done
-  ok "Assets merged"
+  echo "[1/4] Unpacking $ZIP_FILE → $REPO_ROOT …"
+  # Extract into a temp dir, then rsync to preserve git
+  TMP_UNPACK="$(mktemp -d)"
+  unzip -q "$ZIP_FILE" -d "$TMP_UNPACK"
+  # Find the first directory inside the zip (the project root)
+  INNER="$(find "$TMP_UNPACK" -mindepth 1 -maxdepth 1 -type d | head -1)"
+  if [ -z "$INNER" ]; then INNER="$TMP_UNPACK"; fi
+  rsync -a --exclude='.git' --exclude='node_modules' "$INNER/" "$REPO_ROOT/"
+  rm -rf "$TMP_UNPACK"
+  echo "    ✓ Unpacked and merged"
 else
-  echo "  (no assets/ in zip — skipping)"
+  echo "[1/4] No zip provided — using current repo state"
 fi
 
-# ── 7. npm install ────────────────────────────────────────────────────────────
-info "Running npm install..."
+# ── 2. Patch dist/ three imports ────────────────────────────
+echo "[2/4] Patching dist/ bare 'three' imports → CDN …"
+THREE_CDN="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+COUNT=0
+while IFS= read -r -d '' f; do
+  if grep -q "from 'three'" "$f" 2>/dev/null; then
+    sed -i "s|from 'three'|from '$THREE_CDN'|g" "$f"
+    COUNT=$((COUNT + 1))
+  fi
+done < <(find "$REPO_ROOT/dist" -name "*.js" -print0 2>/dev/null)
+echo "    ✓ Patched $COUNT file(s)"
+
+# ── 3. Git commit & push ─────────────────────────────────────
+echo "[3/4] Committing …"
 cd "$REPO_ROOT"
-npm install --silent
-ok "Dependencies installed"
+git add -A
+TIMESTAMP="$(date '+%Y-%m-%d %H:%M')"
+git commit -m "deploy: $TIMESTAMP" --allow-empty
+git push
+echo "    ✓ Pushed to remote"
 
-# ── 8. type-check ────────────────────────────────────────────────────────────
-info "Running type check..."
-npm run type-check
-ok "Type check passed — zero errors"
-
-# ── 9. build ─────────────────────────────────────────────────────────────────
-info "Building..."
-npm run build
-ok "Build complete → dist/"
-
-# ── 10. cleanup ──────────────────────────────────────────────────────────────
-rm -rf "$TMP_DIR"
-ok "Temp dir cleaned up"
+# ── 4. Vercel deploy ─────────────────────────────────────────
+echo "[4/4] Deploying to Vercel …"
+if command -v vercel &>/dev/null; then
+  vercel --prod --yes
+  echo "    ✓ Vercel deploy triggered"
+else
+  echo "    ⚠  vercel CLI not found — push alone should trigger auto-deploy"
+fi
 
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "  ${GREEN}All done. Repo is up to date.${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+echo "═══════════════════════════════════════"
+echo "  SIGNAL RESTORED · DEPLOY COMPLETE"
+echo "═══════════════════════════════════════"
