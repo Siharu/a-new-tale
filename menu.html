@@ -114,7 +114,7 @@
 
     try {
       bootStatus.textContent = 'WNCORE · LOADING ENGINE';
-      const { AppShell } = await import('./dist/ui/index.js');
+      const { AppShell } = await import('./dist/ui/AppShell.js');
       bootStatus.textContent = 'WNCORE · INITIALISING';
       const app = new AppShell('app');
       app.run();
