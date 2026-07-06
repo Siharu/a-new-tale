@@ -107,6 +107,101 @@ export class DrifterAudio {
     });
   }
 
+  // ── Expedition sounds ─────────────────────────────────────────────────────
+
+  /** Soft footstep crunch — plays on movement, called externally every ~0.4s while moving. */
+  playFootstep(): void {
+    try {
+      const ctx = this.getCtx();
+      if (ctx.state === 'suspended') return;
+      const out = ctx.createGain();
+      out.gain.value = this.volume * 0.12;
+      out.connect(ctx.destination);
+      const bufSize = Math.ceil(ctx.sampleRate * 0.06);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * Math.max(0, 1 - i / bufSize);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'bandpass';
+      filt.frequency.value = 200 + Math.random() * 120;
+      filt.Q.value = 3;
+      src.connect(filt);
+      filt.connect(out);
+      src.start();
+    } catch (_) {}
+  }
+
+  /** Low husk growl/click — plays when a husk enters ATTACKING state. */
+  playHuskAggro(): void {
+    try {
+      const ctx = this.getCtx();
+      if (ctx.state === 'suspended') return;
+      const out = ctx.createGain();
+      out.gain.value = this.volume * 0.38;
+      out.connect(ctx.destination);
+      const t = ctx.currentTime;
+      // Sub-bass thump
+      const sub = ctx.createOscillator();
+      sub.type = 'sawtooth';
+      sub.frequency.setValueAtTime(55, t);
+      sub.frequency.exponentialRampToValueAtTime(22, t + 0.35);
+      const subG = ctx.createGain();
+      subG.gain.setValueAtTime(0.6, t);
+      subG.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      sub.connect(subG); subG.connect(out);
+      sub.start(t); sub.stop(t + 0.45);
+      // Noise rattle
+      this.staticBurst(ctx, out, 280, 0.05, 0.18);
+    } catch (_) {}
+  }
+
+  /** Short attack hit — plays when drifter takes damage. */
+  playHurt(): void {
+    this.uiSound((ctx, out) => {
+      this.staticBurst(ctx, out, 600, 0, 0.05);
+      this.tone(ctx, out, 180, 0.02, 0.09, 0.07, 'sawtooth', true);
+    });
+  }
+
+  /** Drifter death — heavy thud, signal dropout. */
+  playDeath(): void {
+    this.uiSound((ctx, out) => {
+      this.tone(ctx, out, 60, 0, 0.25, 0.3, 'sawtooth', true);
+      this.staticBurst(ctx, out, 1200, 0, 0.2);
+      this.tone(ctx, out, 880, 0.1, 0.06, 0.05);
+    });
+  }
+
+  /** Item pickup — short confirmation ping. */
+  playPickup(): void {
+    this.uiSound((ctx, out) => {
+      this.tone(ctx, out, 1100, 0, 0.04, 0.06, 'sine');
+      this.tone(ctx, out, 1650, 0.03, 0.035, 0.055, 'sine');
+    });
+  }
+
+  /** Goal progress update — plays when catalog count increases. */
+  playGoalProgress(): void {
+    this.uiSound((ctx, out) => {
+      this.tone(ctx, out, 660, 0, 0.04, 0.08, 'triangle');
+      this.tone(ctx, out, 990, 0.05, 0.04, 0.07, 'triangle');
+      if (Math.random() < 0.3) this.tone(ctx, out, 1320, 0.09, 0.03, 0.06, 'triangle');
+    });
+  }
+
+  /** Goal complete — plays when all catalogs done, extraction unlocked. */
+  playGoalComplete(): void {
+    this.uiSound((ctx, out) => {
+      this.tone(ctx, out, 440, 0, 0.06, 0.1, 'triangle');
+      this.tone(ctx, out, 550, 0.07, 0.06, 0.1, 'triangle');
+      this.tone(ctx, out, 660, 0.13, 0.06, 0.1, 'triangle');
+      this.tone(ctx, out, 880, 0.19, 0.08, 0.12, 'sine');
+      this.staticBurst(ctx, out, 2200, 0.16, 0.08);
+    });
+  }
+
   private getCtx(): AudioContext {
     if (!this.ctx) {
       this.ctx = new AudioContext();
