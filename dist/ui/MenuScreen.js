@@ -75,7 +75,7 @@ export class MenuScreen {
         if (showAtmosphere)
             this.root.appendChild(this.buildNoise(p.noiseOpacity));
         this.root.appendChild(this.buildBackground(p.skyFilter));
-        const layout = el('div', { position: 'absolute', inset: '0', zIndex: '10', pointerEvents: 'none' });
+        const layout = el('div', { position: 'absolute', inset: '0', zIndex: '10', pointerEvents: 'auto' });
         switch (mode) {
             case 'menu':
                 layout.appendChild(this.buildMenuOverlay());
@@ -481,7 +481,7 @@ export class MenuScreen {
         const zoneType = String(zone?.type ?? '').replace(/_/g, ' ');
         const drifterName = drifter?.name ?? 'DRIFTER';
         const signal = drifter ? Math.round(drifter.signalStrength) : 72;
-        const wrap = el('div', { position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,4,8,0.96)', zIndex: '10' });
+        const wrap = el('div', { position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,4,8,0.96)', zIndex: '10', pointerEvents: 'auto' });
         const card = el('div', { maxWidth: '540px', width: '90%', padding: '32px 36px', background: 'rgba(6,12,22,0.95)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', gap: '20px' });
         const eyebrow = el('div', { fontFamily: "'Share Tech Mono', monospace", fontSize: '0.58rem', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(84,230,164,0.65)', marginBottom: '8px' });
         eyebrow.textContent = `WNCORE · ${mode === 'story' ? 'STRUCTURED RUN' : 'OPEN RUN'} · PRE-DEPLOYMENT BRIEF`;
