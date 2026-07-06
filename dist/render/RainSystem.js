@@ -34,7 +34,7 @@
  *     obsediaIntensity: sky.obsediaRain.intensity,
  *   });
  */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 import { WeatherType, WrongnessState } from '../types.js';
 // ── Vertex shader ─────────────────────────────────────────────────────────────
 // Each particle stores its base position (aBasePos) and a per-particle seed

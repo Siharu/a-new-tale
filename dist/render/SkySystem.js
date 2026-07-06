@@ -24,7 +24,7 @@
  * Tune colors first in sky_preview.html (update it alongside this file —
  * the math should stay identical on both sides), then port changes here.
  */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 import { WrongnessState } from '../types.js';
 // WrongnessState now lives in types.ts (single source of truth — types.ts is
 // pure schema, SkySystem.ts is implementation; see patch-types.sh). Re-exported

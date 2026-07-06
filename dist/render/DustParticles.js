@@ -28,7 +28,7 @@
  *   // each frame, after syncSky():
  *   dust.update(deltaTime, isoRenderer.directionalLightWorldPos, sky.fogColor /* or sunMoon tint *\/, fogIntensity);
  */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 import { SeededRandom } from '../utils.js';
 const DUST_VERTEX = /* glsl */ `
   uniform float uTime;

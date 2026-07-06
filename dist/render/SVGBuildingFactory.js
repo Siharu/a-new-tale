@@ -13,7 +13,7 @@
  * different window/detail rules so a WAREHOUSE reads differently from
  * a SIGNAL_TOWER without any hand-placed content.
  */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 import { BuildingType } from '../types.js';
 import { SVGRasterizer } from './SVGRasterizer.js';
 // Deterministic seeded RNG (mulberry32) — same approach as SkySystem's

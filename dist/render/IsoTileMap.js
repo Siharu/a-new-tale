@@ -22,7 +22,7 @@
  * appropriately (buildings as a stacked-plane diorama, sky as a backdrop
  * dome), since only the ground art is pre-skewed 2D-iso source material.
  */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import * as THREE from 'three';
 export class IsoTileMap {
     constructor(options) {
         this.cellMeshes = new Map(); // keyed "col,row"
