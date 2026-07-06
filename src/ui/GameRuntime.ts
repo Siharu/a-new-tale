@@ -656,6 +656,8 @@ export class GameRuntime {
     this.huskMeshes.set(husk.id, mesh);
   }
 
+  private _huskAttackingSet: Set<string> = new Set();
+
   private updateHuskMeshes(deltaSeconds: number): void {
     const husks = this.engine.huskSystem.getAllHusks();
     const seen = new Set<string>();
@@ -663,7 +665,6 @@ export class GameRuntime {
       seen.add(husk.id);
       const mesh = this.huskMeshes.get(husk.id);
       if (!mesh) {
-        // Husk added at runtime after initial spawn — async, appears next frame.
         void this.createHuskVisual(husk);
         continue;
       }
@@ -671,6 +672,14 @@ export class GameRuntime {
       const { x, z } = worldToScene(husk.position, this.maxDimension);
       mesh.position.set(x, (mesh.userData.yOffset as number) ?? 0.42, z);
       this.applyHuskStateTint(mesh, husk);
+
+      // Play aggro sound once when husk first enters ATTACKING
+      if (husk.state === HuskState.ATTACKING && !this._huskAttackingSet.has(husk.id)) {
+        this._huskAttackingSet.add(husk.id);
+        this.audio?.playHuskAggro();
+      } else if (husk.state !== HuskState.ATTACKING) {
+        this._huskAttackingSet.delete(husk.id);
+      }
 
       const animator = this.huskAnimators.get(husk.id);
       if (animator) {
@@ -684,6 +693,7 @@ export class GameRuntime {
         this.renderer.scene.remove(mesh);
         disposeObject3D(mesh);
         this.huskMeshes.delete(id);
+        this._huskAttackingSet.delete(id);
 
         const animator = this.huskAnimators.get(id);
         if (animator) {
@@ -893,8 +903,25 @@ export class GameRuntime {
     this.lastTimestamp = timestamp;
     this.elapsed += deltaSeconds;
 
+    if (this.drifterDead) {
+      this.animationFrame = window.requestAnimationFrame(this.tick);
+      return;
+    }
+
     const input = this.getInputVector();
     this.engine.update(deltaSeconds, input, []);
+
+    // Footstep sounds while moving
+    const isMoving = Math.abs(input.x) + Math.abs(input.y) > 0.01;
+    if (isMoving) {
+      this.footstepTimer += deltaSeconds;
+      if (this.footstepTimer >= FOOTSTEP_INTERVAL) {
+        this.footstepTimer = 0;
+        this.audio?.playFootstep();
+      }
+    } else {
+      this.footstepTimer = 0;
+    }
 
     // Update Drifter position and animation
     const drifterPosition = this.engine.drifter.position;
@@ -923,6 +950,7 @@ export class GameRuntime {
     }
 
     this.updateHuskMeshes(deltaSeconds);
+    this.updateCombatAndItems(deltaSeconds);
     this.updateBroadcast(deltaSeconds);
 
     this.drawMinimap();
@@ -963,6 +991,10 @@ export class GameRuntime {
     }
     if (key === 'e') {
       this.tryExtract();
+      return;
+    }
+    if (key === 'f') {
+      this.tryPickupNearby();
       return;
     }
 

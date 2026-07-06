@@ -21,6 +21,20 @@ export declare class DrifterAudio {
     playBack(): void;
     playDeploy(): void;
     playAbort(): void;
+    /** Soft footstep crunch — plays on movement, called externally every ~0.4s while moving. */
+    playFootstep(): void;
+    /** Low husk growl/click — plays when a husk enters ATTACKING state. */
+    playHuskAggro(): void;
+    /** Short attack hit — plays when drifter takes damage. */
+    playHurt(): void;
+    /** Drifter death — heavy thud, signal dropout. */
+    playDeath(): void;
+    /** Item pickup — short confirmation ping. */
+    playPickup(): void;
+    /** Goal progress update — plays when catalog count increases. */
+    playGoalProgress(): void;
+    /** Goal complete — plays when all catalogs done, extraction unlocked. */
+    playGoalComplete(): void;
     private getCtx;
     private wrongnessParams;
     private buildAmbient;

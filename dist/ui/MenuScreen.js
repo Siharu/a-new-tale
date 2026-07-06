@@ -160,33 +160,39 @@ export class MenuScreen {
     buildMenuOverlay() {
         const overlay = document.createElement('div');
         overlay.className = 'drifter-menu-overlay';
-        overlay.appendChild(this.buildTitle());
-        const bottom = el('div', { display: 'flex', flexDirection: 'column', gap: '22px', width: '100%' });
-        bottom.appendChild(this.buildStatusInline());
-        bottom.appendChild(this.buildNavItems());
-        bottom.appendChild(this.buildTagline());
-        overlay.appendChild(bottom);
+        // Eyebrow at top of nav section
+        const nav = el('div', { display: 'flex', flexDirection: 'column', gap: '0px', width: '100%' });
+        // Title block
+        const titleBlock = el('div', { marginBottom: '36px' });
+        titleBlock.appendChild(this.buildTitle());
+        nav.appendChild(titleBlock);
+        nav.appendChild(this.buildStatusInline());
+        const divider = el('div', { height: '1px', background: 'rgba(255,255,255,0.07)', margin: '20px 0 18px' });
+        nav.appendChild(divider);
+        nav.appendChild(this.buildNavItems());
+        nav.appendChild(this.buildTagline());
+        overlay.appendChild(nav);
         return overlay;
     }
     buildTitle() {
         const wrap = el('div');
         const eyebrow = el('div', {
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '0.65rem', letterSpacing: '0.22em',
-            textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '10px',
+            fontSize: '0.58rem', letterSpacing: '0.28em',
+            textTransform: 'uppercase', color: 'rgba(84,230,164,0.55)', marginBottom: '14px',
         });
-        eyebrow.textContent = 'WNCORE · RELAY STATION 7 · DHAKA';
+        eyebrow.textContent = 'WNCORE · RELAY STATION 7';
         wrap.appendChild(eyebrow);
         const title = el('h1', {
-            margin: '0 0 8px',
-            fontFamily: "'Rubik Glitch', 'Rajdhani', system-ui, sans-serif",
-            fontSize: 'clamp(2.8rem, 5.5vw, 4.2rem)',
-            fontWeight: '700', letterSpacing: '0.04em',
-            textTransform: 'uppercase', lineHeight: '0.95',
-            color: 'var(--text-primary)', textShadow: '0 2px 40px rgba(0,0,0,0.9)',
+            margin: '0 0 4px',
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: 'clamp(1.6rem, 3.2vw, 2.4rem)',
+            fontWeight: '400', letterSpacing: '0.18em',
+            textTransform: 'uppercase', lineHeight: '1.25',
+            color: 'var(--text-primary)',
         });
         title.className = 'drifter-title';
-        title.innerHTML = "DRIFTER'S<br>TALE";
+        title.innerHTML = "A DRIFTER'S<br>TALE";
         wrap.appendChild(title);
         return wrap;
     }
@@ -217,16 +223,16 @@ export class MenuScreen {
     buildNavItems() {
         const wrap = el('div', { display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'auto' });
         const header = el('div', {
-            fontFamily: "'Share Tech Mono', monospace", fontSize: '0.65rem',
-            letterSpacing: '0.22em', color: 'var(--text-secondary)',
-            textTransform: 'uppercase', marginBottom: '10px',
+            fontFamily: "'Share Tech Mono', monospace", fontSize: '0.56rem',
+            letterSpacing: '0.3em', color: 'rgba(120,150,180,0.45)',
+            textTransform: 'uppercase', marginBottom: '14px',
         });
-        header.textContent = 'SELECT ACCESS NODE';
+        header.textContent = 'SELECT NODE';
         wrap.appendChild(header);
         const items = [
-            ['[01] EXPERIENCE THE CRACK IN REALITY', 'story'],
-            ['[02] EXPLORATION RUN', 'exploration'],
-            ['[03] SETTINGS', 'settings'],
+            ['Experience the Signal', 'story'],
+            ['Expedition Run', 'exploration'],
+            ['Settings', 'settings'],
         ];
         items.forEach(([label, targetMode], idx) => {
             const item = el('div');
@@ -656,9 +662,18 @@ export class MenuScreen {
         // Atmosphere overlays
         surface.appendChild(el('div', { position: 'absolute', inset: '0', zIndex: '1', pointerEvents: 'none', background: 'radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,0.42) 100%)' }));
         surface.appendChild(el('div', { position: 'absolute', inset: '0', zIndex: '1', pointerEvents: 'none', background: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px)', mixBlendMode: 'multiply' }));
-        const grain = createNoiseCanvas(0.04);
+        const grain = createNoiseCanvas(0.018);
         grain.style.zIndex = '1';
         surface.appendChild(grain);
+        // Goal / health HUD (populated by GameRuntime.attachGoalHUD)
+        const goalHud = el('div', {
+            position: 'absolute', left: '24px', bottom: '72px', zIndex: '4',
+            padding: '10px 14px', background: 'rgba(4, 8, 15, 0.72)',
+            border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)',
+            pointerEvents: 'none', minWidth: '240px',
+        });
+        goalHud.id = 'drifter-goal-hud';
+        surface.appendChild(goalHud);
         const backBtn = el('button', { padding: '10px 14px', background: 'rgba(4, 8, 15, 0.86)', border: '1px solid rgba(255,255,255,0.18)', color: 'var(--text-primary)', cursor: 'pointer', fontFamily: "'Share Tech Mono', monospace", fontSize: '0.68rem', letterSpacing: '0.16em', textTransform: 'uppercase', backdropFilter: 'blur(8px)', position: 'absolute', left: '24px', bottom: '24px', zIndex: '4', pointerEvents: 'auto' });
         backBtn.textContent = '← MAIN MENU';
         backBtn.onclick = () => { this.audio.playBack(); onMenu(); };

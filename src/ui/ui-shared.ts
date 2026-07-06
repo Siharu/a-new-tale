@@ -58,55 +58,55 @@ export const WRONGNESS_PALETTE: Record<WrongnessState, WrongnessPalette> = {
   [WrongnessState.SUNNY]: {
     panelBg: 'rgba(12, 18, 28, 0.72)', borderColor: 'rgba(180, 210, 255, 0.18)',
     accentColor: '#8bbfff', textPrimary: '#ddeeff', textSecondary: '#8aaccc',
-    noiseOpacity: 0.03, scanlineOpacity: 0.0, glitch: false, label: 'SUNNY',
+    noiseOpacity: 0.0, scanlineOpacity: 0.0, glitch: false, label: 'SUNNY',
     skyFilter: 'brightness(0.85) saturate(1.1)',
   },
   [WrongnessState.BLUE]: {
     panelBg: 'rgba(8, 16, 32, 0.76)', borderColor: 'rgba(100, 160, 255, 0.22)',
     accentColor: '#6aadff', textPrimary: '#cce0ff', textSecondary: '#6a96c0',
-    noiseOpacity: 0.04, scanlineOpacity: 0.03, glitch: false, label: 'BLUE',
+    noiseOpacity: 0.02, scanlineOpacity: 0.02, glitch: false, label: 'BLUE',
     skyFilter: 'brightness(0.8) hue-rotate(-10deg) saturate(1.15)',
   },
   [WrongnessState.GREY]: {
     panelBg: 'rgba(10, 14, 20, 0.8)', borderColor: 'rgba(140, 160, 180, 0.2)',
     accentColor: '#aac4d8', textPrimary: '#c8d8e8', textSecondary: '#7a90a0',
-    noiseOpacity: 0.06, scanlineOpacity: 0.06, glitch: false, label: 'GREY',
+    noiseOpacity: 0.03, scanlineOpacity: 0.03, glitch: false, label: 'GREY',
     skyFilter: 'brightness(0.72) saturate(0.6) contrast(1.05)',
   },
   [WrongnessState.RAINY]: {
     panelBg: 'rgba(6, 12, 22, 0.84)', borderColor: 'rgba(80, 130, 190, 0.25)',
     accentColor: '#5a9fcc', textPrimary: '#b0cce0', textSecondary: '#5a7a96',
-    noiseOpacity: 0.08, scanlineOpacity: 0.1, glitch: false, label: 'RAINY',
+    noiseOpacity: 0.05, scanlineOpacity: 0.06, glitch: false, label: 'RAINY',
     skyFilter: 'brightness(0.62) saturate(0.45) hue-rotate(-15deg)',
   },
   [WrongnessState.STATIC]: {
     panelBg: 'rgba(8, 10, 18, 0.86)', borderColor: 'rgba(160, 160, 200, 0.3)',
     accentColor: '#c0c8e0', textPrimary: '#c0c8e0', textSecondary: '#6a7090',
-    noiseOpacity: 0.14, scanlineOpacity: 0.16, glitch: true, label: 'STATIC',
+    noiseOpacity: 0.09, scanlineOpacity: 0.10, glitch: true, label: 'STATIC',
     skyFilter: 'brightness(0.58) saturate(0.2) contrast(1.1)',
   },
   [WrongnessState.UNKNOWN]: {
     panelBg: 'rgba(10, 8, 20, 0.88)', borderColor: 'rgba(180, 140, 255, 0.25)',
     accentColor: '#b08de0', textPrimary: '#c8b8f0', textSecondary: '#7060a0',
-    noiseOpacity: 0.18, scanlineOpacity: 0.2, glitch: true, label: 'UNKNOWN',
+    noiseOpacity: 0.11, scanlineOpacity: 0.12, glitch: true, label: 'UNKNOWN',
     skyFilter: 'brightness(0.52) saturate(0.3) hue-rotate(30deg)',
   },
   [WrongnessState.STORMY]: {
     panelBg: 'rgba(6, 6, 14, 0.92)', borderColor: 'rgba(200, 160, 80, 0.3)',
     accentColor: '#d0a040', textPrimary: '#e0c880', textSecondary: '#806030',
-    noiseOpacity: 0.22, scanlineOpacity: 0.28, glitch: true, label: 'STORMY',
+    noiseOpacity: 0.14, scanlineOpacity: 0.16, glitch: true, label: 'STORMY',
     skyFilter: 'brightness(0.45) saturate(0.2) sepia(0.3) contrast(1.15)',
   },
   [WrongnessState.DIFFERENT]: {
     panelBg: 'rgba(8, 4, 18, 0.92)', borderColor: 'rgba(255, 80, 80, 0.3)',
     accentColor: '#ff6060', textPrimary: '#ffc0c0', textSecondary: '#804040',
-    noiseOpacity: 0.28, scanlineOpacity: 0.35, glitch: true, label: 'A DIFFERENT SKY',
+    noiseOpacity: 0.18, scanlineOpacity: 0.20, glitch: true, label: 'A DIFFERENT SKY',
     skyFilter: 'brightness(0.38) saturate(0.15) hue-rotate(160deg) contrast(1.2)',
   },
   [WrongnessState.ANOTHER_SKY]: {
     panelBg: 'rgba(4, 0, 12, 0.96)', borderColor: 'rgba(255, 40, 40, 0.4)',
     accentColor: '#ff3030', textPrimary: '#ffaaaa', textSecondary: '#602020',
-    noiseOpacity: 0.35, scanlineOpacity: 0.45, glitch: true, label: 'ANOTHER SKY',
+    noiseOpacity: 0.24, scanlineOpacity: 0.28, glitch: true, label: 'ANOTHER SKY',
     skyFilter: 'brightness(0.3) saturate(0.1) hue-rotate(180deg) contrast(1.3)',
   },
 };
@@ -261,13 +261,14 @@ export function injectGlobalStyles(): void {
       inset: 0;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: flex-start;
-      padding: 28px 32px 40px 40px;
-      width: min(460px, 46vw);
-      max-width: 520px;
+      padding: 0 0 52px 52px;
+      width: min(500px, 48vw);
+      max-width: 560px;
       height: 100%;
       pointer-events: auto;
+      background: linear-gradient(to right, rgba(2,4,10,0.82) 0%, rgba(2,4,10,0.40) 70%, transparent 100%);
     }
 
     .drifter-inline-status {
@@ -291,41 +292,44 @@ export function injectGlobalStyles(): void {
     .drifter-menu-item {
       display: flex;
       align-items: center;
-      gap: 0.7rem;
-      font-family: 'VT323', 'Share Tech Mono', monospace;
-      font-size: 0.95rem;
-      letter-spacing: 0.24em;
+      gap: 0.9rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.82rem;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
-      color: var(--text-primary);
+      color: rgba(160,185,210,0.65);
       cursor: pointer;
       background: transparent;
       border: none;
-      padding: 6px 0;
+      padding: 8px 0;
       outline: none;
       position: relative;
       width: fit-content;
       min-width: 100%;
+      transition: color 0.15s ease;
     }
 
     .drifter-menu-item::before {
       content: '';
-      width: 10px;
-      height: 10px;
-      border: 1px solid transparent;
-      border-radius: 2px;
-      transition: border-color 0.18s ease, opacity 0.18s ease;
-      opacity: 0;
+      width: 18px;
+      height: 1px;
+      background: transparent;
+      transition: background 0.18s ease, width 0.18s ease;
       flex-shrink: 0;
     }
 
-    .drifter-menu-item.active::before {
-      opacity: 1;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 1px rgba(136, 204, 255, 0.22);
-      background: rgba(255, 255, 255, 0.06);
+    .drifter-menu-item.active {
+      color: var(--text-primary);
     }
 
-    .drifter-menu-item:hover { color: var(--accent-color); }
+    .drifter-menu-item.active::before {
+      background: var(--accent-color);
+      width: 28px;
+      box-shadow: 0 0 8px rgba(84,230,164,0.4);
+    }
+
+    .drifter-menu-item:hover { color: var(--text-primary); }
+    .drifter-menu-item:hover::before { background: rgba(255,255,255,0.3); width: 24px; }
 
     .drifter-tagline {
       font-family: 'VT323', 'Share Tech Mono', monospace;

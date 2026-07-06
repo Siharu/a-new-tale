@@ -44,6 +44,7 @@ export declare class AppShell {
     private launchFromBriefing;
     private disposeRun;
     private showRunComplete;
+    private showRunFail;
     private getSeed;
     private generateZone;
 }

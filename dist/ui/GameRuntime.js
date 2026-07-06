@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { HuskState } from '../gameplay/HuskSystem.js';
 import { IsometricRenderer } from '../render/IsometricRenderer.js';
 import { SkySystem } from '../render/SkySystem.js';
 import { SpriteAnimator, vectorToDirection } from '../render/SpriteAnimator.js';
@@ -26,6 +27,15 @@ const HUSK_SPRITE_FOLDERS = {
     NOIRE: ['noire'],
     JAWIES: ['jawie-bulky', 'jawie-slim'],
 };
+// ── Goal system ─────────────────────────────────────────────────────────────
+/** Number of items the drifter must catalog before extraction unlocks. */
+const CATALOG_GOAL = 3;
+/** How close the drifter must be (world units) to pick up an item. */
+const PICKUP_RADIUS = 80;
+/** Damage per second while a husk is in ATTACKING state and within range. */
+const HUSK_ATTACK_DPS = 22;
+/** Footstep sound interval in seconds. */
+const FOOTSTEP_INTERVAL = 0.38;
 /** Ground tile per zone type — real tile art from assets/tiles/ground_sliced.
  *  Rural relays read as overgrown grass, industry as rocky stone, etc. */
 const ZONE_GROUND_TILE = {
@@ -66,6 +76,10 @@ export class GameRuntime {
     constructor(engine, zone) {
         /** Fired once when the drifter extracts at the entry point (E in range). */
         this.onRunComplete = null;
+        /** Fired when the drifter dies — caller shows death screen. */
+        this.onRunFail = null;
+        /** Optional audio — pass from AppShell for expedition sounds. */
+        this.audio = null;
         this.heldKeys = new Set();
         // ── Mobile / touch ──────────────────────────────────────────────────────────
         /** Virtual joystick container element. */
@@ -102,12 +116,45 @@ export class GameRuntime {
          *  in place each tick rather than rebuilt. */
         this.huskMeshes = new Map();
         this.huskAnimators = new Map();
+        // ── Item / goal system ────────────────────────────────────────────────────
+        /** Items in this zone, cloned from zone.items so we can splice picked-up ones. */
+        this.zoneItems = [];
+        /** Item meshes keyed by item id. */
+        this.itemMeshes = new Map();
+        /** How many items the drifter has cataloged this run. */
+        this.catalogCount = 0;
+        /** Whether goal is complete (all catalogs done). */
+        this.goalComplete = false;
+        /** HUD element for goal/health status — updated in tick. */
+        this.hudGoalEl = null;
+        /** Whether drifter is dead (stops the run). */
+        this.drifterDead = false;
+        /** Footstep timer accumulator. */
+        this.footstepTimer = 0;
+        this._wasUnderAttack = false;
+        this._huskAttackingSet = new Set();
         this.tick = (timestamp) => {
             const deltaSeconds = Math.min(0.05, (timestamp - this.lastTimestamp) / 1000);
             this.lastTimestamp = timestamp;
             this.elapsed += deltaSeconds;
+            if (this.drifterDead) {
+                this.animationFrame = window.requestAnimationFrame(this.tick);
+                return;
+            }
             const input = this.getInputVector();
             this.engine.update(deltaSeconds, input, []);
+            // Footstep sounds while moving
+            const isMoving = Math.abs(input.x) + Math.abs(input.y) > 0.01;
+            if (isMoving) {
+                this.footstepTimer += deltaSeconds;
+                if (this.footstepTimer >= FOOTSTEP_INTERVAL) {
+                    this.footstepTimer = 0;
+                    this.audio?.playFootstep();
+                }
+            }
+            else {
+                this.footstepTimer = 0;
+            }
             // Update Drifter position and animation
             const drifterPosition = this.engine.drifter.position;
             if (this.drifterMesh && drifterPosition) {
@@ -132,6 +179,7 @@ export class GameRuntime {
                     : 0.55 + Math.sin(this.elapsed * 2.4) * 0.2;
             }
             this.updateHuskMeshes(deltaSeconds);
+            this.updateCombatAndItems(deltaSeconds);
             this.updateBroadcast(deltaSeconds);
             this.drawMinimap();
             if (this.worldMapVisible)
@@ -168,6 +216,10 @@ export class GameRuntime {
             }
             if (key === 'e') {
                 this.tryExtract();
+                return;
+            }
+            if (key === 'f') {
+                this.tryPickupNearby();
                 return;
             }
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(event.key)) {
@@ -290,7 +342,10 @@ export class GameRuntime {
         this.sky.applyZone(this.zone);
         this.renderer.syncSky();
         this.buildStaticScene();
-        this.knownZones.set(this.zone.id, { zone: this.zone, isCenter: true });
+        // Build buildings for the initial zone directly — ZoneStreamer uses its
+        // own WorldGenerator (different seed) so its onLoad zones won't match
+        // this.zone. Populate the starting zone's scene objects here instead.
+        this.onZoneLoad(this.zone, true);
         // Drifter sprite — real 8-direction PNG set from disk
         // (assets/characters/drifter/base/north.png ... north-west.png).
         try {
@@ -315,6 +370,7 @@ export class GameRuntime {
             this.staticObjects.push(fallback);
         }
         this.buildMarkers();
+        this.spawnItems();
         await this.spawnHusks();
         // Fires ZoneStreamer.onLoad for the initial 3×3 window synchronously —
         // this.onZoneLoad below is what actually populates zoneObjects now.
@@ -405,18 +461,162 @@ export class GameRuntime {
         }
         return { x, y };
     }
+    /** Attach the in-game goal/health HUD element. Called by AppShell after buildPlayHUD. */
+    attachGoalHUD(el) {
+        this.hudGoalEl = el;
+        this.updateGoalHUD();
+    }
+    /** Spawn glowing item pickups from this.zone.items. */
+    spawnItems() {
+        // Use a shallow copy so we can splice without mutating the zone.
+        this.zoneItems = [...(this.zone.items ?? [])];
+        for (const item of this.zoneItems) {
+            this.spawnItemMesh(item);
+        }
+    }
+    spawnItemMesh(item) {
+        const { x, z } = worldToScene(item.position, this.maxDimension);
+        const geo = new THREE.CylinderGeometry(0.22, 0.22, 0.12, 8);
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0x54e6a4,
+            emissive: 0x2aaa6a,
+            emissiveIntensity: 0.8,
+            transparent: true,
+            opacity: 0.92,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, 0.08, z);
+        mesh.userData.itemId = item.id;
+        this.renderer.scene.add(mesh);
+        this.itemMeshes.set(item.id, mesh);
+        // Add a small floating ring above
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.025, 6, 18), new THREE.MeshBasicMaterial({ color: 0x54e6a4, transparent: true, opacity: 0.45 }));
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(x, 0.22, z);
+        ring.userData.itemRing = true;
+        this.renderer.scene.add(ring);
+        this.staticObjects.push(ring); // rings disposed with static scene
+        this.itemMeshes.set(item.id + '_ring', ring);
+    }
+    /** Try to pick up any item within PICKUP_RADIUS of the drifter. */
+    tryPickupNearby() {
+        if (this.drifterDead || this.runCompleted)
+            return;
+        const dp = this.engine.drifter.position;
+        for (let i = this.zoneItems.length - 1; i >= 0; i--) {
+            const item = this.zoneItems[i];
+            const dx = dp.x - item.position.x;
+            const dy = dp.y - item.position.y;
+            if (Math.sqrt(dx * dx + dy * dy) <= PICKUP_RADIUS) {
+                // Pick up
+                this.zoneItems.splice(i, 1);
+                // Remove meshes
+                const mesh = this.itemMeshes.get(item.id);
+                if (mesh) {
+                    this.renderer.scene.remove(mesh);
+                    disposeObject3D(mesh);
+                    this.itemMeshes.delete(item.id);
+                }
+                const ring = this.itemMeshes.get(item.id + '_ring');
+                if (ring) {
+                    this.renderer.scene.remove(ring);
+                    disposeObject3D(ring);
+                    this.itemMeshes.delete(item.id + '_ring');
+                }
+                // Catalog it
+                this.catalogCount++;
+                this.audio?.playPickup();
+                const wasGoalDone = this.goalComplete;
+                if (this.catalogCount >= CATALOG_GOAL && !this.goalComplete) {
+                    this.goalComplete = true;
+                    this.audio?.playGoalComplete();
+                }
+                else if (!wasGoalDone) {
+                    this.audio?.playGoalProgress();
+                }
+                this.updateGoalHUD();
+                break; // one at a time
+            }
+        }
+    }
+    /** Pulse item meshes and handle husk combat damage. */
+    updateCombatAndItems(deltaSeconds) {
+        if (this.drifterDead)
+            return;
+        // Pulse items
+        for (const [id, mesh] of this.itemMeshes) {
+            if (!id.endsWith('_ring')) {
+                const m = mesh.material;
+                m.emissiveIntensity = 0.5 + Math.sin(this.elapsed * 3.2 + mesh.position.x) * 0.35;
+            }
+        }
+        // Combat: husks in ATTACKING state damage the drifter
+        const husks = this.engine.huskSystem.getAllHusks();
+        let underAttack = false;
+        for (const husk of husks) {
+            if (husk.state === HuskState.ATTACKING) {
+                const dp = this.engine.drifter.position;
+                const dx = husk.position.x - dp.x;
+                const dy = husk.position.y - dp.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                // Attack range in world units — within ~3% of zone width
+                if (dist <= this.maxDimension * 0.06) {
+                    underAttack = true;
+                    this.engine.drifter.health = Math.max(0, this.engine.drifter.health - HUSK_ATTACK_DPS * deltaSeconds);
+                    if (this.engine.drifter.health <= 0) {
+                        this.killDrifter();
+                        return;
+                    }
+                }
+            }
+        }
+        // Play hurt sound on first frame of being attacked (debounced)
+        if (underAttack && !this._wasUnderAttack) {
+            this.audio?.playHurt();
+        }
+        this._wasUnderAttack = underAttack;
+        this.updateGoalHUD();
+    }
+    killDrifter() {
+        if (this.drifterDead)
+            return;
+        this.drifterDead = true;
+        this.audio?.playDeath();
+        this.engine.failRun('Drifter killed by husk');
+        if (this.onRunFail)
+            this.onRunFail('SIGNAL LOST. DRIFTER GONE.');
+    }
+    updateGoalHUD() {
+        if (!this.hudGoalEl)
+            return;
+        const hp = Math.max(0, Math.round(this.engine.drifter.health));
+        const hpColor = hp > 60 ? '#54e6a4' : hp > 30 ? '#f0c060' : '#ff5a4a';
+        const goalText = this.goalComplete
+            ? '<span style="color:#54e6a4">CATALOGING COMPLETE · EXTRACT NOW</span>'
+            : `CATALOG ${this.catalogCount} / ${CATALOG_GOAL} ITEMS &nbsp;<span style="color:rgba(180,200,220,0.45)">[F TO PICK UP]</span>`;
+        this.hudGoalEl.innerHTML = `
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(120,150,180,0.6);margin-bottom:4px;">FIELD OBJECTIVE</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;color:rgba(200,220,240,0.85);line-height:1.6;">${goalText}</div>
+      <div style="margin-top:6px;font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;">
+        <span style="color:rgba(120,150,180,0.6);">VITALS </span>
+        <span style="color:${hpColor};font-size:0.78rem;">${hp}%</span>
+        <span style="color:rgba(120,150,180,0.4);margin:0 6px;">·</span>
+        <span style="color:rgba(120,150,180,0.6);">HEALTH</span>
+      </div>
+    `;
+    }
     /** Ground plane and grid — not zone content, built once. The drifter visual
      *  is created in start() (sprite with geometric fallback), not here. */
     buildStaticScene() {
         this.disposeStatic();
-        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x11151d, roughness: 1, metalness: 0.05 });
+        // MeshBasicMaterial — unlit, always readable regardless of sky/ambient state.
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x1e232e });
         const ground = new THREE.Mesh(new THREE.PlaneGeometry(24, 24, 24, 24), groundMaterial);
         ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
         this.renderer.scene.add(ground);
         this.staticObjects.push(ground);
         // Real ground tile from assets, picked per zone type. Loaded async —
-        // the flat dark ground above stays as the graceful fallback.
+        // the flat fallback color above stays visible until it arrives.
         const tileName = ZONE_GROUND_TILE[this.zone.type] ?? 'dirt_a';
         new THREE.TextureLoader().load(`./assets/tiles/ground_sliced/${tileName}.png`, (texture) => {
             texture.wrapS = THREE.RepeatWrapping;
@@ -426,12 +626,8 @@ export class GameRuntime {
             texture.minFilter = THREE.NearestFilter;
             texture.colorSpace = THREE.SRGBColorSpace;
             groundMaterial.map = texture;
-            // Keep the night mood — tiles read dim under the sky, not daylight-lit.
-            groundMaterial.color.setHex(0x6f747d);
             groundMaterial.needsUpdate = true;
-        }, undefined, () => {
-            /* keep the flat dark fallback */
-        });
+        }, undefined, () => { });
         const grid = new THREE.GridHelper(24, 24, 0x2f3948, 0x161c24);
         grid.position.y = 0.01;
         this.renderer.scene.add(grid);
@@ -508,13 +704,20 @@ export class GameRuntime {
             seen.add(husk.id);
             const mesh = this.huskMeshes.get(husk.id);
             if (!mesh) {
-                // Husk added at runtime after initial spawn — async, appears next frame.
                 void this.createHuskVisual(husk);
                 continue;
             }
             const { x, z } = worldToScene(husk.position, this.maxDimension);
             mesh.position.set(x, mesh.userData.yOffset ?? 0.42, z);
             this.applyHuskStateTint(mesh, husk);
+            // Play aggro sound once when husk first enters ATTACKING
+            if (husk.state === HuskState.ATTACKING && !this._huskAttackingSet.has(husk.id)) {
+                this._huskAttackingSet.add(husk.id);
+                this.audio?.playHuskAggro();
+            }
+            else if (husk.state !== HuskState.ATTACKING) {
+                this._huskAttackingSet.delete(husk.id);
+            }
             const animator = this.huskAnimators.get(husk.id);
             if (animator) {
                 const huskVelocity = husk.velocity || { x: 0, y: 0 };
@@ -527,6 +730,7 @@ export class GameRuntime {
                 this.renderer.scene.remove(mesh);
                 disposeObject3D(mesh);
                 this.huskMeshes.delete(id);
+                this._huskAttackingSet.delete(id);
                 const animator = this.huskAnimators.get(id);
                 if (animator) {
                     animator.dispose();

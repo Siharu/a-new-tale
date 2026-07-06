@@ -215,7 +215,16 @@ export class IsometricRenderer {
     if (!this.attachedSky) return;
     const sky = this.attachedSky;
 
-    this.ambientLight.color.copy(sky.getAmbientLight());
+    // Enforce a minimum ambient so geometry is always readable even at
+    // night / high-wrongness states that produce near-black sky colors.
+    const ambientColor = sky.getAmbientLight();
+    const minLuminance = 0.08;
+    const lum = ambientColor.r * 0.299 + ambientColor.g * 0.587 + ambientColor.b * 0.114;
+    if (lum < minLuminance) {
+      const boost = minLuminance / Math.max(lum, 0.001);
+      ambientColor.multiplyScalar(boost);
+    }
+    this.ambientLight.color.copy(ambientColor);
 
     if (this.directionalLight) {
       const fresh = sky.getDirectionalLight();

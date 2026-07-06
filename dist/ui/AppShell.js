@@ -140,20 +140,31 @@ export class AppShell {
             return;
         // Build GameRuntime
         this.runtime = new GameRuntime(this.engine, this.currentZone);
+        this.runtime.audio = this.audio;
         this.runtime.onRunComplete = () => {
             this.engine?.completeRun();
             this.showRunComplete();
         };
+        this.runtime.onRunFail = (cause) => {
+            this.showRunFail(cause);
+        };
         await this.runtime.start();
+        // Start expedition ambient
+        this.audio.startAmbient(this.currentZone.wrongnessState);
         // Switch to play view: replace menu DOM with HUD
         this.menu.destroy();
         const playSurface = this.menu.buildPlayHUD(this.runtime, () => this.showMenu());
         this.root.appendChild(playSurface);
         this.playSurface = playSurface;
+        // Attach goal HUD element (created inside buildPlayHUD)
+        const goalEl = playSurface.querySelector('#drifter-goal-hud');
+        if (goalEl)
+            this.runtime.attachGoalHUD(goalEl);
         // Register ESC → showMenu on window for GameRuntime's escape hatch
         window.__DRIFTER_APP = this;
     }
     disposeRun() {
+        this.audio.stopAmbient();
         if (this.runtime) {
             this.runtime.stop();
             this.runtime = null;
@@ -202,6 +213,42 @@ export class AppShell {
             overlay.remove();
             this.showMenu();
         }, 3800);
+    }
+    showRunFail(cause) {
+        const overlay = el('div', {
+            position: 'fixed', inset: '0', zIndex: '90',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexDirection: 'column', gap: '12px',
+            background: 'rgba(4,1,1,0.94)', backdropFilter: 'blur(4px)',
+        });
+        const title = el('div', {
+            fontFamily: "'Rubik Glitch', 'Rajdhani', system-ui, sans-serif",
+            fontSize: '2.2rem', letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: '#ff4a3a', textShadow: '0 0 30px rgba(255,60,40,0.35)',
+        });
+        title.textContent = 'SIGNAL LOST';
+        const drifterName = this.engine?.drifter.name ?? 'DRIFTER';
+        const DEATH_LINES = [
+            'The relay went dark. No recovery signal detected.',
+            'Last transmission corrupted. Drifter unaccounted for.',
+            'Zone consumed another one. The logbook stays open.',
+            "They didn't make it back. Add them to the list.",
+            'No extraction. The silence said everything.',
+        ];
+        const deathLine = DEATH_LINES[Math.floor(Math.random() * DEATH_LINES.length)];
+        const sub = el('div', {
+            fontFamily: "'Share Tech Mono', monospace", fontSize: '0.72rem',
+            letterSpacing: '0.18em', textTransform: 'uppercase',
+            color: 'rgba(180,140,140,0.7)', textAlign: 'center', lineHeight: '1.8',
+        });
+        sub.innerHTML = `DRIFTER LOST · ${drifterName}<br><span style="color:rgba(200,100,100,0.5);font-size:0.6rem;">${cause}</span><br><br><span style="color:rgba(140,110,110,0.45);font-size:0.65rem;letter-spacing:0.1em;text-transform:none;">"${deathLine}"</span>`;
+        overlay.appendChild(title);
+        overlay.appendChild(sub);
+        document.body.appendChild(overlay);
+        window.setTimeout(() => {
+            overlay.remove();
+            this.showMenu();
+        }, 4200);
     }
     // ── Helpers ──────────────────────────────────────────────────────────────────
     getSeed() {

@@ -162,8 +162,11 @@ export class SVGBuildingFactory {
     const geometry = new THREE.PlaneGeometry(w, h);
     const material = new THREE.MeshStandardMaterial({
       map: texture,
+      emissiveMap: texture,
+      emissive: new THREE.Color(0xffffff),
+      emissiveIntensity: 0.12, // low-level self-illumination so facades read in very dark scenes
       transparent: false,
-      side: THREE.FrontSide,
+      side: THREE.DoubleSide, // visible from both sides to avoid backface culling in isometric view
     });
     return new THREE.Mesh(geometry, material);
   }
