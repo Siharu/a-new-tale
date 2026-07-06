@@ -18,7 +18,7 @@
  * OffscreenCanvas/Worker support, and is fast enough for the bake sizes
  * we use (256x256-ish facades, not full-screen content).
  */
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 export class SVGRasterizer {
     constructor() {
         this.cache = new Map();

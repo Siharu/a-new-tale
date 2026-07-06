@@ -28,7 +28,7 @@
  *   godRays.renderOcclusion(renderer, scene, camera, occlusionOverrideMaterial);
  *   godRays.composite(renderer, pixelPipeline.getRenderTarget(), lightScreenPos);
  */
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 const RADIAL_BLUR_VERTEX = /* glsl */ `
   varying vec2 vUv;
   void main() {

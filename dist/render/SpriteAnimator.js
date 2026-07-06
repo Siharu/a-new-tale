@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 /** Eight directional vectors for sprite orientation (in world coordinates). */
 export const DIRECTIONS = {
     NORTH: { x: 0, y: -1, name: 'north' },

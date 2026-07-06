@@ -27,7 +27,7 @@
  * here assumes specific game content — it's content-agnostic by design,
  * same as IsometricRenderer's M2 scope.
  */
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 export class LightingController {
     constructor(renderer, options = {}) {
         this.scene = null;
