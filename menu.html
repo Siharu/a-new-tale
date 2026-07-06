@@ -75,7 +75,7 @@
 </head>
 <body>
 
-  <!-- HomeScreen renders itself here -->
+  <!-- AppShell renders itself here -->
   <div id="app"></div>
 
   <!-- Boot splash (gone once engine loads) -->
@@ -114,9 +114,10 @@
 
     try {
       bootStatus.textContent = 'WNCORE · LOADING ENGINE';
-      const { HomeScreen } = await import('./dist/ui/home-screen.js');
+      const { AppShell } = await import('./dist/ui/index.js');
       bootStatus.textContent = 'WNCORE · INITIALISING';
-      const app = new HomeScreen('app');
+      const app = new AppShell('app');
+      app.run();
       window.__DRIFTER_APP = app;
       hideBoot();
     } catch (err) {
