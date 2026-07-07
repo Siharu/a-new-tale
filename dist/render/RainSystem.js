@@ -81,12 +81,14 @@ const RAIN_VERTEX = /* glsl */ `
     vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPos;
 
-    // Stretch Y >> X to make a streak from a point sprite.
-    // gl_PointSize is in pixels; we set width and height separately via the
-    // fragment shader's gl_PointCoord aspect test (see below).
-    float dist = -mvPos.z;
-    float sizeScale = max(1.0, 300.0 / dist);
-    gl_PointSize = uStreakH * sizeScale * uPixelRatio;
+    // uStreakH/uStreakW are already literal pixel sizes (see options doc).
+    // No distance-based scaling here — the camera is orthographic, so
+    // apparent size does NOT change with depth. (A prior version applied a
+    // "300.0 / dist" perspective-camera compensation trick that assumed a
+    // ~300-unit camera distance; this project's camera sits ~30 units away,
+    // so that formula was inflating every streak 7-15x — the giant vertical
+    // bar bug.)
+    gl_PointSize = uStreakH * uPixelRatio;
 
     // fade near top and bottom of the fall volume so wrapping is invisible
     float fadeEdge = min(phase / (uBoundsH * 0.08), 1.0) *

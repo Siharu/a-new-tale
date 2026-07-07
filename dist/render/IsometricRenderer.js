@@ -50,6 +50,11 @@ export class IsometricRenderer {
         const aspect = this.canvas.clientWidth / this.canvas.clientHeight || 16 / 9;
         this.camera = this.buildIsoCamera(aspect);
         this.scene.add(this.camera);
+        this.cinematicCamera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+        this.cinematicCamera.position.set(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+        this.cinematicCamera.lookAt(0, 0, 0);
+        this.scene.add(this.cinematicCamera);
+        this.activeCamera = this.camera;
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false });
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.pixelPipeline = new PixelPipeline(options.pixelPipeline);
@@ -141,7 +146,12 @@ export class IsometricRenderer {
             this.skyDome.position.set(0, this.viewSize * 0.5, -this.viewSize * 4);
             this.skyDome.lookAt(this.camera.position);
             this.scene.add(this.skyDome);
-            GodRayLayer.exemptFromOcclusion(this.skyDome);
+            // Deliberately NOT exempted from GodRayLayer's occlusion pass — the
+            // dome should render as a normal black silhouette like everything
+            // else. GodRayLayer injects its own small sun-disc bright spot at the
+            // light's screen position instead; exempting this screen-filling
+            // background plane was the earlier bug that washed the whole frame
+            // out (see GodRayLayer.ts class doc comment).
         }
         if (!this.directionalLight) {
             this.directionalLight = sky.getDirectionalLight();
@@ -149,7 +159,7 @@ export class IsometricRenderer {
             this.lightingController.attach(this.scene, this.directionalLight, this.camera);
             this.lightingController.fitToScene(this.viewSize * 1.5);
         }
-        this.scene.fog = new THREE.Fog(sky.fogColor.getHex(), this.cameraDistance * 0.6, this.cameraDistance * 2.2);
+        this.scene.fog = new THREE.Fog(sky.fogColor.getHex(), this.cameraDistance * 1.5, this.cameraDistance * 4.0);
         this.syncSky();
     }
     /**
@@ -162,10 +172,11 @@ export class IsometricRenderer {
         if (!this.attachedSky)
             return;
         const sky = this.attachedSky;
-        // Enforce a minimum ambient so geometry is always readable even at
-        // night / high-wrongness states that produce near-black sky colors.
+        // Enforce a minimum ambient so geometry is always readable.
+        // 0.32 floor keeps buildings and ground visible on all active wrongness
+        // states — below this MeshStandardMaterial surfaces go effectively black.
         const ambientColor = sky.getAmbientLight();
-        const minLuminance = 0.08;
+        const minLuminance = 0.32;
         const lum = ambientColor.r * 0.299 + ambientColor.g * 0.587 + ambientColor.b * 0.114;
         if (lum < minLuminance) {
             const boost = minLuminance / Math.max(lum, 0.001);
@@ -207,7 +218,11 @@ export class IsometricRenderer {
                 this.dustParticles.setOpacity(0);
             }
             else if (this.dustEnabled) {
-                // restore — DustParticles.update() will set the correct value next frame
+                // Explicitly restore — DustParticles.update() sets this correctly each
+                // frame, but if dust was disabled mid-rain and re-enabled, opacity
+                // stays 0 until update() runs. Force it back to a sane non-zero value
+                // here so the first visible frame isn't a ghost frame.
+                this.dustParticles.setOpacity(0.35);
             }
         }
         if (this.scene.fog instanceof THREE.Fog) {
@@ -237,16 +252,29 @@ export class IsometricRenderer {
      * attachSky() hasn't been called), so this is always safe to call.
      */
     render() {
-        this.pixelPipeline.renderScene(this.renderer, this.scene, this.camera);
-        if (this.godRaysEnabled && this.directionalLight) {
-            const lightScreenPos = GodRayLayer.worldToScreen01(this.directionalLight.position, this.camera);
-            this.godRayLayer.renderOcclusion(this.renderer, this.scene, this.camera);
-            this.godRayLayer.composite(this.renderer, this.pixelPipeline.getRenderTarget().texture, lightScreenPos);
-            this.pixelPipeline.blitTextureToScreen(this.renderer, this.godRayLayer.getOutputTexture(), this.canvas.clientWidth, this.canvas.clientHeight);
-        }
-        else {
-            this.pixelPipeline.blitToScreen(this.renderer, this.canvas.clientWidth, this.canvas.clientHeight);
-        }
+        // Direct render to screen — bypasses PixelPipeline and GodRayLayer entirely.
+        // This guarantees the scene is visible: if the pixel pipeline / god ray
+        // blit math is off, geometry still renders. Re-enable the pipeline once
+        // scene visibility is confirmed working.
+        void this.godRaysEnabled; // field retained for setGodRaysEnabled(); not used in this simplified path
+        this.renderer.setRenderTarget(null);
+        this.renderer.setScissorTest(false);
+        this.renderer.setViewport(0, 0, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
+        this.renderer.render(this.scene, this.activeCamera);
+    }
+    /** Switch the drawn camera to the free-flying cinematic one (menu backdrop,
+     *  briefing flythroughs). Gameplay keeps updating drifter/husk positions in
+     *  world space as normal underneath — only what's drawn changes. */
+    useCinematicCamera() {
+        this.activeCamera = this.cinematicCamera;
+    }
+    /** Switch back to the fixed-pitch gameplay iso camera. */
+    useIsoCamera() {
+        this.activeCamera = this.camera;
+    }
+    /** True if the cinematic camera is currently the one being drawn with. */
+    isCinematicActive() {
+        return this.activeCamera === this.cinematicCamera;
     }
     /** Toggle god rays at runtime (e.g. quality settings, or auto-disable during HUSK_NEST combat for clarity). */
     setGodRaysEnabled(enabled) {
@@ -259,8 +287,11 @@ export class IsometricRenderer {
     }
     /** Call on window resize / canvas size change. */
     handleResize() {
-        const width = this.canvas.clientWidth || this.canvas.width || 1;
-        const height = this.canvas.clientHeight || this.canvas.height || 1;
+        // canvas.clientWidth is 0 if canvas hasn't been laid out yet (e.g.
+        // called immediately after appendChild before the browser paints).
+        // Fall back to window dimensions so renderer never initialises at 0×0.
+        const width = this.canvas.clientWidth || window.innerWidth || 1;
+        const height = this.canvas.clientHeight || window.innerHeight || 1;
         const aspect = width / height;
         const halfH = this.viewSize / 2;
         const halfW = halfH * aspect;
@@ -269,6 +300,8 @@ export class IsometricRenderer {
         this.camera.top = halfH;
         this.camera.bottom = -halfH;
         this.camera.updateProjectionMatrix();
+        this.cinematicCamera.aspect = aspect;
+        this.cinematicCamera.updateProjectionMatrix();
         this.renderer.setSize(width, height, false);
         // Internal/offscreen target resolutions (PixelPipeline, GodRayLayer)
         // deliberately do NOT change on resize — only the final blit scale

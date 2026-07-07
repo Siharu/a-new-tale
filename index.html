@@ -11,6 +11,9 @@
   <meta property="og:description" content="Explore a relay station interface for the Drifter universe with atmospheric menu and gameplay placeholder support." />
   <meta property="og:image" content="./assets/drfiter.png" />
   <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script type="importmap">
     {
       "imports": {
@@ -30,33 +33,60 @@
     /* Boot screen — shown until HomeScreen is ready */
     #boot {
       position: fixed; inset: 0; z-index: 9999;
-      background: #060a12;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(20,30,45,0.5) 0%, transparent 60%),
+        #060a12;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 18px;
+      align-items: center; justify-content: center; gap: 16px;
       transition: opacity 0.8s ease;
+      overflow: hidden;
     }
     #boot.hidden { opacity: 0; pointer-events: none; }
 
+    /* Faint scanlines + grain so the boot screen reads as the same relay
+       interface as the rest of the game, not a generic loading spinner. */
+    #boot::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px);
+      mix-blend-mode: multiply;
+      opacity: 0.5;
+    }
+    #boot::after {
+      content: '';
+      position: absolute; inset: -10%; pointer-events: none;
+      background: radial-gradient(circle at 20% 80%, rgba(84,230,164,0.05), transparent 40%);
+    }
+
+    .boot-eyebrow {
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      font-size: 0.6rem; letter-spacing: 0.32em;
+      text-transform: uppercase; color: rgba(84,230,164,0.6);
+      z-index: 1;
+    }
     .boot-logo {
-      font-family: 'Courier New', monospace;
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; color: rgba(200,215,235,0.9);
+      font-family: 'Rajdhani', 'Courier New', monospace;
+      font-size: clamp(1.8rem, 4.4vw, 2.8rem);
+      font-weight: 600; letter-spacing: 0.22em;
+      text-transform: uppercase; color: rgba(210,222,238,0.95);
+      z-index: 1;
     }
     .boot-sub {
-      font-family: 'Courier New', monospace;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
       font-size: 0.65rem; letter-spacing: 0.3em;
-      text-transform: uppercase; color: rgba(100,130,160,0.6);
+      text-transform: uppercase; color: rgba(120,200,170,0.65);
+      z-index: 1;
     }
     .boot-bar {
-      width: 180px; height: 1px;
-      background: rgba(255,255,255,0.06);
+      width: 200px; height: 1px;
+      background: rgba(84,230,164,0.12);
       position: relative; overflow: hidden;
+      z-index: 1;
     }
     .boot-bar::after {
       content: '';
       position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-      background: rgba(140,190,220,0.5);
+      background: rgba(84,230,164,0.55);
       animation: scan 1.4s ease-in-out infinite;
     }
     @keyframes scan {
@@ -69,19 +99,19 @@
       position: fixed; inset: 0; z-index: 9998;
       background: #060a12; display: none;
       flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-      font-family: 'Courier New', monospace;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
     }
     #error.show { display: flex; }
-    .err-title { font-size: 1rem; letter-spacing: 0.2em; color: rgba(192,57,43,0.9); text-transform: uppercase; }
-    .err-msg   { font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); max-width: 420px; text-align: center; line-height: 1.7; }
+    .err-title { font-size: 1rem; letter-spacing: 0.2em; color: rgba(255,122,106,0.9); text-transform: uppercase; }
+    .err-msg   { font-size: 0.65rem; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); max-width: 420px; text-align: center; line-height: 1.7; white-space: pre-wrap; }
     .err-retry {
       margin-top: 8px; padding: 9px 22px;
-      border: 1px solid rgba(192,57,43,0.4); background: transparent;
-      color: rgba(192,57,43,0.8); font-family: 'Courier New', monospace;
+      border: 1px solid rgba(255,122,106,0.4); background: transparent;
+      color: rgba(255,122,106,0.85); font-family: 'Share Tech Mono', 'Courier New', monospace;
       font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
       cursor: pointer; transition: background 0.15s;
     }
-    .err-retry:hover { background: rgba(192,57,43,0.1); }
+    .err-retry:hover { background: rgba(255,122,106,0.1); }
   </style>
 </head>
 <body>
@@ -91,6 +121,7 @@
 
   <!-- Boot splash (gone once engine loads) -->
   <div id="boot">
+    <div class="boot-eyebrow">WNCORE · Relay Station 7</div>
     <div class="boot-logo">Drifter's Tale</div>
     <div class="boot-bar"></div>
     <div class="boot-sub" id="boot-status">WNCORE · ESTABLISHING UPLINK</div>

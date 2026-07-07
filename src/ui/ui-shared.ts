@@ -1,4 +1,5 @@
 import { WrongnessState } from '../types.js';
+import { cursor } from './AnimatedCursor.js';
 
 // ─── DOM helper ───────────────────────────────────────────────────────────────
 
@@ -261,9 +262,10 @@ export function injectGlobalStyles(): void {
       inset: 0;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      justify-content: center;
       align-items: flex-start;
-      padding: 0 0 52px 52px;
+      padding: 0 0 0 52px;
+      padding-top: 8vh;
       width: min(500px, 48vw);
       max-width: 560px;
       height: 100%;
@@ -353,6 +355,58 @@ export function injectGlobalStyles(): void {
       box-shadow: 0 0 32px rgba(240,248,255,0.18);
       pointer-events: none;
       opacity: 0.95;
+      transition: background 2s ease, box-shadow 2s ease, filter 2s ease;
+    }
+
+    /* Moon turns deep red for STORMY / DIFFERENT / ANOTHER_SKY */
+    .drifter-moon--red {
+      background: radial-gradient(circle, rgba(255,60,40,0.97) 0%, rgba(200,30,20,0.55) 38%, rgba(180,10,10,0.12) 62%, transparent 100%);
+      box-shadow: 0 0 48px rgba(220,40,20,0.45), 0 0 120px rgba(180,10,10,0.2);
+      filter: blur(0.6px);
+      animation: moon-red-pulse 4s ease-in-out infinite;
+    }
+
+    /* Moon turns amber/orange for UNKNOWN */
+    .drifter-moon--orange {
+      background: radial-gradient(circle, rgba(255,180,60,0.96) 0%, rgba(220,110,20,0.45) 40%, rgba(180,60,10,0.08) 62%, transparent 100%);
+      box-shadow: 0 0 40px rgba(220,120,30,0.4), 0 0 100px rgba(180,60,10,0.15);
+      filter: blur(0.5px);
+      animation: moon-orange-pulse 5s ease-in-out infinite;
+    }
+
+    @keyframes moon-red-pulse {
+      0%, 100% { opacity: 0.9; box-shadow: 0 0 48px rgba(220,40,20,0.45), 0 0 120px rgba(180,10,10,0.2); }
+      50%       { opacity: 1.0; box-shadow: 0 0 72px rgba(255,50,20,0.65), 0 0 180px rgba(200,10,10,0.3); }
+    }
+
+    @keyframes moon-orange-pulse {
+      0%, 100% { opacity: 0.85; box-shadow: 0 0 40px rgba(220,120,30,0.4); }
+      50%       { opacity: 0.98; box-shadow: 0 0 64px rgba(255,160,50,0.55); }
+    }
+
+    /* Rain fall animations */
+    @keyframes menu-rain-fall {
+      from { background-position: 80px 0; }
+      to   { background-position: 0 400px; }
+    }
+    @keyframes menu-rain-fall2 {
+      from { background-position: 120px 0; }
+      to   { background-position: 0 400px; }
+    }
+
+    /* Lightning flash animations */
+    @keyframes menu-lightning {
+      0%, 88%, 91%, 100% { opacity: 0; }
+      89%   { opacity: 1; }
+      90%   { opacity: 0.2; }
+      90.5% { opacity: 0.9; }
+    }
+    @keyframes menu-lightning-red {
+      0%, 82%, 86%, 100% { opacity: 0; }
+      83%   { opacity: 1; }
+      84%   { opacity: 0.3; }
+      85%   { opacity: 0.8; }
+      85.5% { opacity: 0.1; }
     }
 
     .drifter-btn {
@@ -364,7 +418,7 @@ export function injectGlobalStyles(): void {
       color: var(--text-primary);
       font-family: 'Rubik Glitch', 'Rajdhani', system-ui, sans-serif;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 400;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       text-align: left;
@@ -465,8 +519,9 @@ export function injectGlobalStyles(): void {
       .drifter-menu-overlay {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 24px 24px 36px 24px !important;
-        justify-content: flex-end !important;
+        padding: 28px 24px 28px 24px !important;
+        justify-content: center !important;
+        padding-top: 12vh !important;
         background: linear-gradient(to top, rgba(6,10,18,0.92) 0%, rgba(6,10,18,0.0) 55%);
       }
 
@@ -556,4 +611,36 @@ export function injectGlobalStyles(): void {
     }
   `;
   document.head.appendChild(style);
+
+  // Apply pointer cursor to all current and future interactive elements
+  function applyPointerCursor(root: Document | Element = document): void {
+    const targets = (root instanceof Document ? root : root).querySelectorAll<HTMLElement>(
+      'button, a, [role="button"], input[type="range"], .drifter-btn, .drifter-menu-item'
+    );
+    for (const t of Array.from(targets)) {
+      if (!t.dataset.cursorApplied) {
+        t.dataset.cursorApplied = '1';
+        cursor.applyType(t, 'pointer');
+      }
+    }
+  }
+
+  applyPointerCursor();
+
+  // Watch for new buttons added to the DOM
+  new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      for (const node of Array.from(m.addedNodes)) {
+        if (node instanceof Element) {
+          if (node.matches?.('button, a, [role="button"], .drifter-btn, .drifter-menu-item')) {
+            if (!(node as HTMLElement).dataset.cursorApplied) {
+              (node as HTMLElement).dataset.cursorApplied = '1';
+              cursor.applyType(node as HTMLElement, 'pointer');
+            }
+          }
+          applyPointerCursor(node);
+        }
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
 }

@@ -25,7 +25,7 @@
  *
  * Usage (inside IsometricRenderer.render(), after pixelPipeline.renderScene()
  * and before pixelPipeline.blitToScreen()):
- *   godRays.renderOcclusion(renderer, scene, camera, occlusionOverrideMaterial);
+ *   godRays.renderOcclusion(renderer, scene, camera, lightScreenPos);
  *   godRays.composite(renderer, pixelPipeline.getRenderTarget(), lightScreenPos);
  */
 import * as THREE from 'three';
@@ -37,14 +37,18 @@ export interface GodRayLayerOptions {
     density?: number;
     weight?: number;
     rayColor?: THREE.Color;
+    sunRadius?: number;
 }
 export declare class GodRayLayer {
     private width;
     private height;
     private occlusionTarget;
     private occlusionOverrideMaterial;
-    private skyOcclusionExemptTag;
     private occlusionHideTag;
+    private sunDiscMaterial;
+    private sunDiscScene;
+    private sunDiscCamera;
+    private sunDiscMesh;
     private compositeTarget;
     private compositeScene;
     private compositeCamera;
@@ -53,29 +57,25 @@ export declare class GodRayLayer {
     intensity: number;
     constructor(options?: GodRayLayerOptions);
     /**
-     * Tag a mesh (e.g. the sky dome, or any emissive element) so the
-     * occlusion pass renders it as bright/transparent rather than a black
-     * silhouette — without this, the sky dome itself would block its own
-     * light source's rays at the source, which defeats the effect.
-     */
-    static exemptFromOcclusion(mesh: THREE.Object3D): void;
-    /**
      * Tag a non-Mesh additive effect (DustParticles' THREE.Points, future
      * sprite-based effects, etc.) to be temporarily hidden during the
      * occlusion pass rather than material-swapped — see occlusionHideTag
      * above for why Points need different handling than Mesh silhouettes.
      */
     static hideDuringOcclusion(object: THREE.Object3D): void;
-    /** Update the ray tint to match the current sun/moon glow color from SkySystem, for cohesion with the sky bake. */
+    /** Update the ray tint to match the current sun/moon glow color from SkySystem, for cohesion with the sky bake. Drives both the radial-blur streak color and the injected sun-disc color so they read as one light source. */
     setRayColor(color: THREE.Color): void;
     /**
      * Pass 1: render the scene with all real materials swapped for solid
-     * black, EXCEPT meshes tagged via exemptFromOcclusion() (the sky dome),
-     * which render as their actual bright texture. This produces a
-     * black-silhouettes-on-bright-sky mask that the radial blur then streaks
-     * outward from the light position.
+     * black (nothing is exempted — the sky dome included, since exempting a
+     * screen-filling background was the root cause of the old wash-out bug,
+     * see class doc comment). Then inject a small bright disc at the
+     * light's screen position — this is the actual "sun" the radial blur
+     * streaks outward from, matching the classic crepuscular-ray reference
+     * implementation (mrdoob's original godrays example uses the same
+     * black-silhouette-scene + separate fake-sun-spot split).
      */
-    renderOcclusion(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): void;
+    renderOcclusion(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, lightScreenPos: THREE.Vector2): void;
     /**
      * Pass 2: radial-blur the occlusion mask toward the light's screen
      * position and additively composite onto the already-rendered scene

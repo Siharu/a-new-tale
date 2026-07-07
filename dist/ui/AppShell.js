@@ -25,11 +25,17 @@ import { GameRuntime } from './GameRuntime.js';
 import { DrifterAudio } from './DrifterAudio.js';
 import { MenuScreen, loadSettings, saveSettings } from './MenuScreen.js';
 import { el, injectGlobalStyles } from './ui-shared.js';
+import { cursor } from './AnimatedCursor.js';
 export class AppShell {
     constructor(rootId = 'app') {
         this.engine = null;
         this.runtime = null;
         this.currentZone = null;
+        /** Backdrop wrap holding runtime.canvas during the briefing screen's
+         *  cinematic preview — removed once launchFromBriefing() re-parents the
+         *  canvas into the real play HUD, or on disposeRun() if the player backs
+         *  out without deploying. */
+        this.briefingCanvasWrap = null;
         this.wrongnessState = WrongnessState.GREY;
         // Play surface — injected into root alongside the menu layer when in play mode
         this.playSurface = null;
@@ -38,6 +44,8 @@ export class AppShell {
             throw new Error(`AppShell: no #${rootId}`);
         this.root = root;
         injectGlobalStyles();
+        // Apply glitch cursor to the whole app
+        cursor.apply(document.body);
         const settings = loadSettings();
         this.audio = new DrifterAudio();
         this.audio.setVolume(settings.volume);
@@ -127,18 +135,9 @@ export class AppShell {
         this.menu.currentZone = this.currentZone;
         this.menu.engine = this.engine;
         this.menu.wrongnessState = this.wrongnessState;
-        // Briefing screen
-        const statusMsg = mode === 'story'
-            ? 'Story run initiated. Keep the relay alive.'
-            : 'Exploration run started. Move quietly.';
-        this.menu.setStatus(statusMsg);
-        this.menu.setMode('briefing');
-        this.menu.render();
-    }
-    async launchFromBriefing() {
-        if (!this.engine || !this.currentZone)
-            return;
-        // Build GameRuntime
+        // Build GameRuntime now (not at launch) so the briefing screen can show a
+        // live cinematic preview of the zone the drifter's about to drop into.
+        // Gameplay stays suspended (enterCinematic()) until launchFromBriefing().
         this.runtime = new GameRuntime(this.engine, this.currentZone);
         this.runtime.audio = this.audio;
         this.runtime.onRunComplete = () => {
@@ -148,14 +147,46 @@ export class AppShell {
         this.runtime.onRunFail = (cause) => {
             this.showRunFail(cause);
         };
+        // Backdrop wrap sits behind the briefing card (which has its own zIndex).
+        // Insert into the DOM before start() for the same reason as before: Three.js
+        // needs real clientWidth/clientHeight on first tick, which requires the
+        // canvas to already be laid out.
+        const canvasWrap = el('div', { position: 'absolute', inset: '0', zIndex: '0', pointerEvents: 'none' });
+        Object.assign(this.runtime.canvas.style, { width: '100%', height: '100%', display: 'block' });
+        canvasWrap.appendChild(this.runtime.canvas);
+        this.root.appendChild(canvasWrap);
+        this.briefingCanvasWrap = canvasWrap;
+        await new Promise(r => requestAnimationFrame(() => r()));
+        this.runtime.handleResize();
         await this.runtime.start();
-        // Start expedition ambient
-        this.audio.startAmbient(this.currentZone.wrongnessState);
-        // Switch to play view: replace menu DOM with HUD
+        this.runtime.enterCinematic();
+        // Briefing screen
+        const statusMsg = mode === 'story'
+            ? 'Story run initiated. Keep the relay alive.'
+            : 'Exploration run started. Move quietly.';
+        this.menu.setStatus(statusMsg);
+        this.menu.setMode('briefing');
+        this.menu.render();
+    }
+    async launchFromBriefing() {
+        if (!this.engine || !this.currentZone || !this.runtime)
+            return;
+        // Resume real gameplay — camera back to fixed iso, ticking un-suspended.
+        this.runtime.exitCinematic();
         this.menu.destroy();
         const playSurface = this.menu.buildPlayHUD(this.runtime, () => this.showMenu());
+        // buildPlayHUD re-parents runtime.canvas into its own wrap — the briefing
+        // backdrop wrap is now empty, safe to remove.
+        this.briefingCanvasWrap?.remove();
+        this.briefingCanvasWrap = null;
         this.root.appendChild(playSurface);
         this.playSurface = playSurface;
+        await new Promise(r => requestAnimationFrame(() => r()));
+        this.runtime.handleResize();
+        // Runtime is already started/ticking (from startRun's cinematic preview) —
+        // no second start() call needed here.
+        // Start expedition ambient
+        this.audio.startAmbient(this.currentZone.wrongnessState);
         // Attach goal HUD element (created inside buildPlayHUD)
         const goalEl = playSurface.querySelector('#drifter-goal-hud');
         if (goalEl)
@@ -168,6 +199,10 @@ export class AppShell {
         if (this.runtime) {
             this.runtime.stop();
             this.runtime = null;
+        }
+        if (this.briefingCanvasWrap) {
+            this.briefingCanvasWrap.remove();
+            this.briefingCanvasWrap = null;
         }
         if (this.playSurface) {
             this.playSurface.remove();

@@ -63,8 +63,16 @@ const DUST_VERTEX = /* glsl */ `
     vSeed = aSeed;
 
     gl_Position = projectionMatrix * mvPosition;
-    // size attenuates with distance, like THREE's built-in sizeAttenuation
-    gl_PointSize = aSize * uPixelRatio * (300.0 / -mvPosition.z);
+    // This camera is ORTHOGRAPHIC — unlike a perspective camera, points at
+    // any depth should read as the same screen size (no foreshortening).
+    // An earlier version divided by -mvPosition.z (a perspective-camera
+    // sizeAttenuation formula); under orthographic projection that constant
+    // was uncalibrated against this scene's actual depth range (~20-40 view
+    // units), inflating every mote to 10-20x its intended size — enough
+    // overlap at 150 additively-blended particles to wash the whole frame
+    // white/beige. Constant size, no distance term, is the correct fix
+    // (this is a known three.js pitfall: mrdoob/three.js#7517, #10385).
+    gl_PointSize = aSize * uPixelRatio;
   }
 `;
 const DUST_FRAGMENT = /* glsl */ `
@@ -146,6 +154,11 @@ export class DustParticles {
     /** Re-seed the whole field — call on zone change so each region gets a stable-but-distinct dust layout. */
     reseed(zoneSeed, minSize = 1.5, maxSize = 4, minSpeed = 0.15, maxSpeed = 0.5) {
         this.populate(zoneSeed, minSize, maxSize, minSpeed, maxSpeed);
+        // Keep uWrapHeight in sync with the geometry — the vertex shader uses
+        // this uniform to wrap particle Y positions; if it drifts from bounds*0.8
+        // (e.g. bounds changed between construction and reseed), particles wrap
+        // at the wrong height and the fall cycle visibly stutters.
+        this.material.uniforms.uWrapHeight.value = this.bounds * 0.8;
     }
     /** Exposes the underlying THREE.Points object — needed so callers (e.g. IsometricRenderer) can tag it via GodRayLayer.hideDuringOcclusion() before adding it to the scene. */
     getObject3D() {

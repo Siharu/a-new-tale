@@ -42,7 +42,7 @@ const VIGNETTE_PRESETS = {
 };
 // Rain-streak overlay applies for these weather/wrongness states; intensity
 // scales further by decayLevel and (for Obsedia) its own intensity field.
-const RAIN_WEATHER = new Set(['ACID_RAIN']);
+const RAIN_WEATHER = new Set(['ACID_RAIN', 'STATIC_STORM']);
 const RAIN_WRONGNESS = new Set([WrongnessState.RAINY, WrongnessState.STORMY]);
 export class AtmosphereController {
     constructor(container) {

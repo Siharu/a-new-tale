@@ -25,7 +25,7 @@
  *
  * Usage (inside IsometricRenderer.render(), after pixelPipeline.renderScene()
  * and before pixelPipeline.blitToScreen()):
- *   godRays.renderOcclusion(renderer, scene, camera, occlusionOverrideMaterial);
+ *   godRays.renderOcclusion(renderer, scene, camera, lightScreenPos);
  *   godRays.composite(renderer, pixelPipeline.getRenderTarget(), lightScreenPos);
  */
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -70,9 +70,34 @@ const RADIAL_BLUR_FRAGMENT = /* glsl */ `
     gl_FragColor = vec4(base + rays, 1.0);
   }
 `;
+// Injects a small bright disc into the occlusion buffer at the light's
+// screen position — this is the actual "light source" the radial blur
+// streaks outward from. Classic crepuscular-ray implementations (mrdoob's
+// original godrays example, GPU Gems) render the WHOLE scene as black
+// silhouettes and rely on exactly this kind of small fake-sun spot; they
+// do NOT exempt the sky/background itself, since anything bright over a
+// large screen area (like a full sky dome) reads as "light source" during
+// the radial blur and washes the entire frame instead of producing shafts.
+const SUN_DISC_VERTEX = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`;
+const SUN_DISC_FRAGMENT = /* glsl */ `
+  uniform vec2 sunScreenPos;
+  uniform float sunRadius;
+  uniform vec3 sunColor;
+  varying vec2 vUv;
+  void main() {
+    float d = distance(vUv, sunScreenPos);
+    float disc = smoothstep(sunRadius, sunRadius * 0.3, d);
+    gl_FragColor = vec4(sunColor * disc, disc);
+  }
+`;
 export class GodRayLayer {
     constructor(options = {}) {
-        this.skyOcclusionExemptTag = 'godrayOcclusionExempt'; // userData flag — sky dome / emissive elements skip the override
         this.occlusionHideTag = 'godrayHideDuringOcclusion'; // userData flag — non-Mesh additive effects (DustParticles' THREE.Points,
         this.intensity = 1.0; // public knob — drive this from fog/weather (e.g. fade out in FOG_HEAVY)
         this.width = options.width ?? 384;
@@ -83,6 +108,23 @@ export class GodRayLayer {
             generateMipmaps: false,
         });
         this.occlusionOverrideMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        this.sunDiscMaterial = new THREE.ShaderMaterial({
+            vertexShader: SUN_DISC_VERTEX,
+            fragmentShader: SUN_DISC_FRAGMENT,
+            uniforms: {
+                sunScreenPos: { value: new THREE.Vector2(0.5, 0.3) },
+                sunRadius: { value: options.sunRadius ?? 0.06 },
+                sunColor: { value: (options.rayColor ?? new THREE.Color(0xfff3d6)).clone() },
+            },
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthTest: false,
+            depthWrite: false,
+        });
+        this.sunDiscScene = new THREE.Scene();
+        this.sunDiscCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        this.sunDiscMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.sunDiscMaterial);
+        this.sunDiscScene.add(this.sunDiscMesh);
         this.compositeTarget = new THREE.WebGLRenderTarget(this.width, this.height, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
@@ -97,9 +139,9 @@ export class GodRayLayer {
                 tScene: { value: null },
                 lightScreenPos: { value: new THREE.Vector2(0.5, 0.3) },
                 exposure: { value: options.exposure ?? 0.35 },
-                decay: { value: options.decay ?? 0.96 },
-                density: { value: options.density ?? 0.85 },
-                weight: { value: options.weight ?? 0.4 },
+                decay: { value: options.decay ?? 0.94 },
+                density: { value: options.density ?? 0.7 },
+                weight: { value: options.weight ?? 0.35 },
                 rayColor: { value: (options.rayColor ?? new THREE.Color(0xfff3d6)).clone() },
                 intensity: { value: 1.0 },
             },
@@ -112,15 +154,6 @@ export class GodRayLayer {
         this.compositeScene.add(this.compositeMesh);
     }
     /**
-     * Tag a mesh (e.g. the sky dome, or any emissive element) so the
-     * occlusion pass renders it as bright/transparent rather than a black
-     * silhouette — without this, the sky dome itself would block its own
-     * light source's rays at the source, which defeats the effect.
-     */
-    static exemptFromOcclusion(mesh) {
-        mesh.userData.godrayOcclusionExempt = true;
-    }
-    /**
      * Tag a non-Mesh additive effect (DustParticles' THREE.Points, future
      * sprite-based effects, etc.) to be temporarily hidden during the
      * occlusion pass rather than material-swapped — see occlusionHideTag
@@ -129,18 +162,22 @@ export class GodRayLayer {
     static hideDuringOcclusion(object) {
         object.userData.godrayHideDuringOcclusion = true;
     }
-    /** Update the ray tint to match the current sun/moon glow color from SkySystem, for cohesion with the sky bake. */
+    /** Update the ray tint to match the current sun/moon glow color from SkySystem, for cohesion with the sky bake. Drives both the radial-blur streak color and the injected sun-disc color so they read as one light source. */
     setRayColor(color) {
         this.compositeMaterial.uniforms.rayColor.value.copy(color);
+        this.sunDiscMaterial.uniforms.sunColor.value.copy(color);
     }
     /**
      * Pass 1: render the scene with all real materials swapped for solid
-     * black, EXCEPT meshes tagged via exemptFromOcclusion() (the sky dome),
-     * which render as their actual bright texture. This produces a
-     * black-silhouettes-on-bright-sky mask that the radial blur then streaks
-     * outward from the light position.
+     * black (nothing is exempted — the sky dome included, since exempting a
+     * screen-filling background was the root cause of the old wash-out bug,
+     * see class doc comment). Then inject a small bright disc at the
+     * light's screen position — this is the actual "sun" the radial blur
+     * streaks outward from, matching the classic crepuscular-ray reference
+     * implementation (mrdoob's original godrays example uses the same
+     * black-silhouette-scene + separate fake-sun-spot split).
      */
-    renderOcclusion(renderer, scene, camera) {
+    renderOcclusion(renderer, scene, camera, lightScreenPos) {
         const swapped = [];
         const hidden = [];
         scene.traverse((obj) => {
@@ -154,17 +191,24 @@ export class GodRayLayer {
             const mesh = obj;
             if (!mesh.isMesh)
                 return;
-            if (mesh.userData[this.skyOcclusionExemptTag])
-                return; // left as-is — renders bright
             swapped.push({ mesh, original: mesh.material });
             mesh.material = this.occlusionOverrideMaterial;
         });
         const prevTarget = renderer.getRenderTarget();
+        const prevAutoClear = renderer.autoClear;
         renderer.setRenderTarget(this.occlusionTarget);
-        renderer.setClearColor(0x000000, 1);
+        renderer.setClearColor(0x000000, 1); // black = "no direct light" default; only the sun disc below should read as bright
+        renderer.autoClear = true;
         renderer.clear();
         renderer.render(scene, camera);
+        // Inject the fake-sun disc additively on top, without clearing, so it
+        // layers onto the black silhouette buffer rather than replacing it.
+        this.sunDiscMaterial.uniforms.sunScreenPos.value.copy(lightScreenPos);
+        renderer.autoClear = false;
+        renderer.render(this.sunDiscScene, this.sunDiscCamera);
+        renderer.autoClear = prevAutoClear;
         renderer.setRenderTarget(prevTarget);
+        renderer.setClearColor(0x000000, 1); // restore — caller (IsometricRenderer) expects black default; PixelPipeline sets its own clear anyway but be explicit
         for (const { mesh, original } of swapped) {
             mesh.material = original;
         }
@@ -220,6 +264,8 @@ export class GodRayLayer {
         this.occlusionOverrideMaterial.dispose();
         this.compositeMaterial.dispose();
         this.compositeMesh.geometry.dispose();
+        this.sunDiscMaterial.dispose();
+        this.sunDiscMesh.geometry.dispose();
     }
 }
 //# sourceMappingURL=GodRayLayer.js.map

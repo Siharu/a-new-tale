@@ -169,6 +169,7 @@ export class SkySystem {
         this.clouds = [];
         this.glitchSeedTime = 0;
         this._lastFogIntensity = 0.3;
+        this._directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
         this.grainCache = null;
         const w = options.textureWidth ?? 512;
         const h = options.textureHeight ?? 512;
@@ -293,14 +294,19 @@ export class SkySystem {
         return this.baseColor.clone();
     }
     getDirectionalLight() {
-        const light = new THREE.DirectionalLight(this.baseColor.clone(), this.lastComputed?.isNight ? 0.35 : 1.0);
+        // Reuse a single cached instance — this is called every frame by
+        // IsometricRenderer.syncSky() just to copy color/intensity/position onto
+        // the scene light; allocating a new THREE.DirectionalLight each call
+        // created a fresh heap object (+ shadow camera + matrices) every frame.
+        this._directionalLight.color.copy(this.baseColor);
+        this._directionalLight.intensity = this.lastComputed?.isNight ? 0.35 : 1.0;
         if (this.lastComputed) {
             const x = (this.lastComputed.sunX - 0.5) * 20;
             const y = (1 - this.lastComputed.sunY) * 15 + 2;
             const z = 8;
-            light.position.set(x, y, z);
+            this._directionalLight.position.set(x, y, z);
         }
-        return light;
+        return this._directionalLight;
     }
     getTexture() {
         return this.texture;
@@ -461,7 +467,12 @@ export class SkySystem {
         if (this.obsediaRain.active && this.obsediaRain.intensity > 0) {
             this.drawObsediaRain(ctx, w, h, this.obsediaRain.intensity);
         }
-        // grain pass — breaks gradient banding, no hand art needed
+        // grain pass — breaks gradient banding, no hand art needed.
+        // STATIC re-bakes every frame for the glitch flicker; invalidate the
+        // cache so each bake gets a freshly randomised grain pattern instead of
+        // the same static (ironic) noise stamped identically every frame.
+        if (isGlitching)
+            this.grainCache = null;
         if (this.grainAmount > 0) {
             this.applyGrain(ctx, w, h, this.grainAmount);
         }

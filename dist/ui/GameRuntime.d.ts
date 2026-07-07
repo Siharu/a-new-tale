@@ -1,5 +1,6 @@
 import type { Zone, ZoneID } from '../types.js';
 import type { GameplayEngine } from '../gameplay/index.js';
+import { CinematicCamera, type OrbitOptions } from '../render/CinematicCamera.js';
 import type { DrifterAudio } from './DrifterAudio.js';
 export declare class GameRuntime {
     readonly canvas: HTMLCanvasElement;
@@ -19,6 +20,12 @@ export declare class GameRuntime {
     private readonly zone;
     private readonly renderer;
     private readonly sky;
+    private readonly cinematicCameraController;
+    /** When true, tick() skips input/movement/combat/HUD updates and only
+     *  drives the cinematic camera + sky/render — used for briefing flythroughs.
+     *  Defaults false so existing gameplay behavior is unaffected unless
+     *  enterCinematic() is explicitly called. */
+    private cinematicMode;
     private readonly heldKeys;
     private readonly minimapCtx;
     private readonly worldMapCtx;
@@ -115,6 +122,24 @@ export declare class GameRuntime {
     private tryExtract;
     private disposeStatic;
     private disposeAll;
+    /**
+     * Switch to a free-flying perspective view of the already-built scene and
+     * suspend gameplay updates (movement, combat, HUD). Intended for the
+     * briefing screen's "drop preview" — the zone is already generated/loaded
+     * by this point (start() must have run first), so this just changes what's
+     * drawn, not what exists. Defaults to a slow orbit if no keyframes given.
+     */
+    enterCinematic(orbitOptions?: OrbitOptions): void;
+    /** Play a one-shot scripted flythrough instead of the default orbit —
+     *  e.g. a scripted "drop-in" pan across the zone before the briefing
+     *  Confirm button appears. Falls back to orbit() behavior once finished
+     *  unless exitCinematic()/a new call supersedes it. */
+    playCinematicPath(keyframes: Parameters<CinematicCamera['flyPath']>[0], onComplete?: () => void): void;
+    /** Return to the fixed iso gameplay camera and resume normal ticking
+     *  (input, movement, combat, HUD). Call when the player confirms
+     *  deployment from the briefing screen. */
+    exitCinematic(): void;
+    isCinematicActive(): boolean;
     private tick;
     private onKeyDown;
     private onKeyUp;

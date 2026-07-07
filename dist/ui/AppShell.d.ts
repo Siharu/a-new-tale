@@ -25,6 +25,11 @@ export declare class AppShell {
     private engine;
     private runtime;
     private currentZone;
+    /** Backdrop wrap holding runtime.canvas during the briefing screen's
+     *  cinematic preview — removed once launchFromBriefing() re-parents the
+     *  canvas into the real play HUD, or on disposeRun() if the player backs
+     *  out without deploying. */
+    private briefingCanvasWrap;
     private wrongnessState;
     private playSurface;
     constructor(rootId?: string);

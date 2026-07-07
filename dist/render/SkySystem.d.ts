@@ -76,6 +76,7 @@ export declare class SkySystem {
     private clouds;
     private glitchSeedTime;
     private _lastFogIntensity;
+    private _directionalLight;
     constructor(options?: SkySystemOptions);
     init(): void;
     /**

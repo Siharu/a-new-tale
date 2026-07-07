@@ -143,13 +143,16 @@ export class WorldGenerator {
       fogIntensity: valueNoise2D(position.x, position.y, zoneSeed) * 0.8,
       decayLevel: this.calculateDecayLevel(zoneType, this.options.difficulty),
 
-      // TEMP: placeholder assignment until the curated region/wrongness
-      // ordering (the Finland -> Nepal-style progression discussed for
-      // SkySystem's WrongnessState) gets designed. For now this just
-      // satisfies the Zone interface so WorldGenerator compiles and runs —
-      // every zone gets a random WrongnessState and a generic region label.
-      // Replace this block once the real curated assignment logic exists.
-      wrongnessState: zoneRng.pick(Object.values(WrongnessState)),
+      // Randomly pick from the four visually safe states so the scene is
+      // always readable. High-wrongness states (STORMY, DIFFERENT, ANOTHER_SKY)
+      // drive ambient+fog so dark that only emissive fragments survive — they
+      // can be reintroduced once the renderer has a proper visibility floor.
+      wrongnessState: zoneRng.pick([
+        WrongnessState.SUNNY,
+        WrongnessState.BLUE,
+        WrongnessState.GREY,
+        WrongnessState.RAINY,
+      ] as WrongnessState[]),
       region: `Region-${zoneID.slice(0, 8)}`,
 
       buildings,

@@ -194,14 +194,104 @@ export class MenuScreen {
     });
     bg.appendChild(base);
 
+    // ── Rain overlay ──────────────────────────────────────────────────────────
+    // Only shown on RAINY / STORMY / UNKNOWN / DIFFERENT / ANOTHER_SKY.
+    // The background image already has baked-in rain texture; this adds
+    // a second moving CSS layer on top so it reads as live/animated, not static art.
+    const rainStates: WrongnessState[] = [
+      WrongnessState.RAINY, WrongnessState.STORMY,
+      WrongnessState.UNKNOWN, WrongnessState.DIFFERENT, WrongnessState.ANOTHER_SKY,
+    ];
+    if (rainStates.includes(this.wrongnessState)) {
+      const rainOpacity =
+        this.wrongnessState === WrongnessState.RAINY ? 0.18 :
+        this.wrongnessState === WrongnessState.STORMY ? 0.28 :
+        this.wrongnessState === WrongnessState.UNKNOWN ? 0.22 :
+        this.wrongnessState === WrongnessState.DIFFERENT ? 0.32 : 0.40;
+
+      const rainColor =
+        (this.wrongnessState === WrongnessState.DIFFERENT || this.wrongnessState === WrongnessState.ANOTHER_SKY)
+          ? 'rgba(180, 40, 40, 0.6)'
+          : 'rgba(180, 210, 230, 0.6)';
+
+      // Primary rain — wide gaps, 1px strokes, slow fall
+      const rain = el('div', { position: 'absolute', inset: '-20% -5%', pointerEvents: 'none', zIndex: '2' });
+      Object.assign(rain.style, {
+        backgroundImage: `repeating-linear-gradient(
+          100deg,
+          transparent 0px,
+          transparent 60px,
+          ${rainColor} 60px,
+          ${rainColor} 61px,
+          transparent 62px,
+          transparent 120px
+        )`,
+        backgroundSize: '200px 400%',
+        animation: 'menu-rain-fall 1.6s linear infinite',
+        opacity: String(rainOpacity),
+        mixBlendMode: 'screen',
+      });
+      bg.appendChild(rain);
+
+      // Secondary layer — slightly different angle and speed for parallax depth
+      const rain2 = el('div', { position: 'absolute', inset: '-20% -5%', pointerEvents: 'none', zIndex: '2' });
+      Object.assign(rain2.style, {
+        backgroundImage: `repeating-linear-gradient(
+          98deg,
+          transparent 0px,
+          transparent 90px,
+          ${rainColor} 90px,
+          ${rainColor} 91px,
+          transparent 92px,
+          transparent 180px
+        )`,
+        backgroundSize: '300px 400%',
+        animation: 'menu-rain-fall2 2.4s linear infinite',
+        opacity: String(rainOpacity * 0.45),
+        mixBlendMode: 'screen',
+      });
+      bg.appendChild(rain2);
+    }
+
+    // ── Moon — tints red on high wrongness states ──────────────────────────────
     const moon = document.createElement('div');
     moon.className = 'drifter-moon';
+    const redMoonStates: WrongnessState[] = [
+      WrongnessState.STORMY, WrongnessState.DIFFERENT, WrongnessState.ANOTHER_SKY,
+    ];
+    const orangeMoonStates: WrongnessState[] = [WrongnessState.UNKNOWN];
+    if (redMoonStates.includes(this.wrongnessState)) {
+      moon.classList.add('drifter-moon--red');
+    } else if (orangeMoonStates.includes(this.wrongnessState)) {
+      moon.classList.add('drifter-moon--orange');
+    }
     bg.appendChild(moon);
+
+    // ── Lightning flashes — STORMY / DIFFERENT / ANOTHER_SKY only ─────────────
+    const lightningStates: WrongnessState[] = [
+      WrongnessState.STORMY, WrongnessState.DIFFERENT, WrongnessState.ANOTHER_SKY,
+    ];
+    if (lightningStates.includes(this.wrongnessState)) {
+      const lightning = el('div', {
+        position: 'absolute', inset: '0', pointerEvents: 'none', zIndex: '3',
+        background: this.wrongnessState === WrongnessState.ANOTHER_SKY
+          ? 'rgba(220, 80, 60, 0.18)'
+          : 'rgba(200, 220, 255, 0.22)',
+        opacity: '0',
+        animation: this.wrongnessState === WrongnessState.STORMY
+          ? 'menu-lightning 5.5s ease-in-out infinite'
+          : this.wrongnessState === WrongnessState.DIFFERENT
+          ? 'menu-lightning 3.8s ease-in-out infinite'
+          : 'menu-lightning-red 2.8s ease-in-out infinite',
+      });
+      bg.appendChild(lightning);
+    }
 
     const vignette = el('div', {
       position: 'absolute', inset: '0',
       background: 'linear-gradient(to top, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.0) 48%)',
       pointerEvents: 'none',
+      zIndex: '4',
     });
     bg.appendChild(vignette);
 
@@ -245,17 +335,167 @@ export class MenuScreen {
     eyebrow.textContent = 'WNCORE · RELAY STATION 7';
     wrap.appendChild(eyebrow);
 
-    const title = el('h1', {
-      margin: '0 0 4px',
-      fontFamily: "'Share Tech Mono', monospace",
-      fontSize: 'clamp(1.6rem, 3.2vw, 2.4rem)',
-      fontWeight: '400', letterSpacing: '0.18em',
-      textTransform: 'uppercase', lineHeight: '1.25',
-      color: 'var(--text-primary)',
+    // Logbook SVG logo — worn field notebook with burned-in title.
+    // Sized via CSS so it scales with the overlay width rather than
+    // a fixed pixel dimension; aspect ratio locked by viewBox.
+    const logoWrap = el('div');
+    logoWrap.className = 'drifter-title';
+    Object.assign(logoWrap.style, {
+      display: 'block',
+      width: 'clamp(220px, 28vw, 380px)',
+      marginBottom: '4px',
     });
-    title.className = 'drifter-title';
-    title.innerHTML = "A DRIFTER'S<br>TALE";
-    wrap.appendChild(title);
+    logoWrap.innerHTML = `
+      <svg viewBox="0 0 380 140" xmlns="http://www.w3.org/2000/svg" aria-label="A Drifter's Tale logbook" style="width:100%;height:auto;display:block;overflow:visible;">
+        <defs>
+          <!-- Leather cover base gradient -->
+          <linearGradient id="lg-cover" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"  stop-color="#2a1f14"/>
+            <stop offset="40%" stop-color="#1e1510"/>
+            <stop offset="100%" stop-color="#120d08"/>
+          </linearGradient>
+          <!-- Spine gradient -->
+          <linearGradient id="lg-spine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"  stop-color="#3a2a1a"/>
+            <stop offset="100%" stop-color="#1a1008"/>
+          </linearGradient>
+          <!-- Page edge gradient -->
+          <linearGradient id="lg-pages" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"  stop-color="#d8c9a8"/>
+            <stop offset="100%" stop-color="#b8a888"/>
+          </linearGradient>
+          <!-- Glow for burned text -->
+          <filter id="lg-glow" x="-20%" y="-40%" width="140%" height="180%">
+            <feGaussianBlur stdDeviation="2.2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- Subtle emboss for cover texture -->
+          <filter id="lg-emboss" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" seed="4" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.8" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <!-- Scratch texture overlay -->
+          <filter id="lg-scratch">
+            <feTurbulence type="turbulence" baseFrequency="0.9 0.02" numOctaves="1" seed="7" result="scratches"/>
+            <feColorMatrix in="scratches" type="saturate" values="0" result="grey"/>
+            <feBlend in="SourceGraphic" in2="grey" mode="multiply"/>
+          </filter>
+          <clipPath id="lg-cover-clip">
+            <rect x="28" y="6" width="340" height="128" rx="3"/>
+          </clipPath>
+        </defs>
+
+        <!-- Page stack (right edge, visible behind cover) -->
+        <rect x="355" y="12" width="8" height="116" rx="1" fill="url(#lg-pages)" opacity="0.9"/>
+        <rect x="352" y="14" width="5" height="112" rx="1" fill="#c8b898" opacity="0.6"/>
+        <!-- Fine page lines -->
+        <line x1="352" y1="28"  x2="363" y2="28"  stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+        <line x1="352" y1="42"  x2="363" y2="42"  stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+        <line x1="352" y1="56"  x2="363" y2="56"  stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+        <line x1="352" y1="70"  x2="363" y2="70"  stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+        <line x1="352" y1="84"  x2="363" y2="84"  stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+        <line x1="352" y1="98"  x2="363" y2="98"  stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+        <line x1="352" y1="112" x2="363" y2="112" stroke="#a89878" stroke-width="0.4" opacity="0.5"/>
+
+        <!-- Spine -->
+        <rect x="28" y="6" width="18" height="128" rx="2" fill="url(#lg-spine)"/>
+        <!-- Spine stitching -->
+        <line x1="36" y1="18"  x2="36" y2="26"  stroke="#4a3520" stroke-width="1.2" stroke-dasharray="2,3" opacity="0.7"/>
+        <line x1="36" y1="54"  x2="36" y2="86"  stroke="#4a3520" stroke-width="1.2" stroke-dasharray="2,3" opacity="0.7"/>
+        <line x1="36" y1="104" x2="36" y2="122" stroke="#4a3520" stroke-width="1.2" stroke-dasharray="2,3" opacity="0.7"/>
+        <!-- Spine edge highlight -->
+        <rect x="28" y="6" width="2" height="128" rx="1" fill="rgba(255,200,120,0.08)"/>
+
+        <!-- Cover body -->
+        <rect x="46" y="6" width="306" height="128" rx="3" fill="url(#lg-cover)" filter="url(#lg-emboss)"/>
+
+        <!-- Worn corner shadows -->
+        <path d="M46,6 L80,6 L46,40 Z" fill="rgba(0,0,0,0.25)" opacity="0.6"/>
+        <path d="M352,6 L352,40 L318,6 Z" fill="rgba(0,0,0,0.15)" opacity="0.5"/>
+        <path d="M46,134 L46,100 L80,134 Z" fill="rgba(0,0,0,0.3)" opacity="0.7"/>
+        <path d="M352,134 L318,134 L352,100 Z" fill="rgba(0,0,0,0.2)" opacity="0.5"/>
+
+        <!-- Horizontal wear lines across leather -->
+        <line x1="46" y1="44"  x2="352" y2="44"  stroke="#0a0604" stroke-width="0.6" opacity="0.35"/>
+        <line x1="46" y1="96"  x2="352" y2="96"  stroke="#0a0604" stroke-width="0.5" opacity="0.25"/>
+        <line x1="60" y1="68"  x2="200" y2="67"  stroke="#0a0604" stroke-width="0.4" opacity="0.18"/>
+
+        <!-- Rivets / binding nails on spine edge -->
+        <circle cx="46" cy="22"  r="3.5" fill="#3a2a18" stroke="#5a4020" stroke-width="0.8"/>
+        <circle cx="46" cy="22"  r="1.2" fill="#6a5030" opacity="0.7"/>
+        <circle cx="46" cy="70"  r="3.5" fill="#3a2a18" stroke="#5a4020" stroke-width="0.8"/>
+        <circle cx="46" cy="70"  r="1.2" fill="#6a5030" opacity="0.7"/>
+        <circle cx="46" cy="118" r="3.5" fill="#3a2a18" stroke="#5a4020" stroke-width="0.8"/>
+        <circle cx="46" cy="118" r="1.2" fill="#6a5030" opacity="0.7"/>
+
+        <!-- Cover border groove (debossed rectangle) -->
+        <rect x="58" y="14" width="284" height="112" rx="2"
+              fill="none" stroke="rgba(0,0,0,0.55)" stroke-width="1.5"/>
+        <rect x="60" y="16" width="280" height="108" rx="1.5"
+              fill="none" stroke="rgba(255,180,80,0.06)" stroke-width="0.8"/>
+
+        <!-- DRIFTER FACTION EMBLEM — small compass rose top-left of inner frame -->
+        <g transform="translate(76, 36)" opacity="0.55">
+          <circle cx="0" cy="0" r="10" fill="none" stroke="rgba(180,140,60,0.5)" stroke-width="0.8"/>
+          <line x1="0" y1="-10" x2="0" y2="10" stroke="rgba(180,140,60,0.6)" stroke-width="0.7"/>
+          <line x1="-10" y1="0" x2="10" y2="0" stroke="rgba(180,140,60,0.6)" stroke-width="0.7"/>
+          <polygon points="0,-8 2,-2 0,0 -2,-2" fill="rgba(200,160,80,0.7)"/>
+          <polygon points="0,8 2,2 0,0 -2,2" fill="rgba(160,120,60,0.4)"/>
+          <circle cx="0" cy="0" r="2" fill="rgba(200,160,80,0.5)"/>
+        </g>
+
+        <!-- Catalog stamp top right -->
+        <g transform="translate(310, 28)" opacity="0.4">
+          <rect x="-18" y="-8" width="36" height="16" rx="1"
+                fill="none" stroke="rgba(180,140,60,0.6)" stroke-width="0.7" stroke-dasharray="2,1.5"/>
+          <text x="0" y="4" text-anchor="middle"
+                font-family="'Share Tech Mono', monospace" font-size="6" letter-spacing="0.05em"
+                fill="rgba(180,140,60,0.8)">CAT.LOG</text>
+        </g>
+
+        <!-- MAIN TITLE — burned/embossed into leather -->
+        <!-- "A DRIFTER'S" line -->
+        <text x="90" y="75"
+              font-family="'Share Tech Mono', monospace"
+              font-size="28" font-weight="400"
+              letter-spacing="0.14em"
+              fill="rgba(200,185,155,0.15)"
+              filter="url(#lg-emboss)">A DRIFTER'S</text>
+        <text x="90" y="75"
+              font-family="'Share Tech Mono', monospace"
+              font-size="28" font-weight="400"
+              letter-spacing="0.14em"
+              fill="rgba(220,205,175,0.88)"
+              filter="url(#lg-glow)">A DRIFTER'S</text>
+
+        <!-- "TALE" line — slightly larger, more weight -->
+        <text x="90" y="108"
+              font-family="'Share Tech Mono', monospace"
+              font-size="38" font-weight="400"
+              letter-spacing="0.22em"
+              fill="rgba(200,185,155,0.15)"
+              filter="url(#lg-emboss)">TALE</text>
+        <text x="90" y="108"
+              font-family="'Share Tech Mono', monospace"
+              font-size="38" font-weight="400"
+              letter-spacing="0.22em"
+              fill="rgba(220,205,175,0.92)"
+              filter="url(#lg-glow)">TALE</text>
+
+        <!-- Horizontal rule under title text -->
+        <line x1="90" y1="116" x2="320" y2="116"
+              stroke="rgba(180,150,80,0.3)" stroke-width="0.7"/>
+
+        <!-- Cover edge bevel (light) -->
+        <rect x="46" y="6" width="306" height="128" rx="3"
+              fill="none" stroke="rgba(255,200,100,0.07)" stroke-width="1"/>
+
+        <!-- Obsedia-style dark stain, bottom right corner of cover -->
+        <ellipse cx="320" cy="128" rx="40" ry="18"
+                 fill="rgba(0,0,0,0.45)" opacity="0.5"/>
+      </svg>
+    `;
+    wrap.appendChild(logoWrap);
 
     return wrap;
   }
@@ -495,34 +735,6 @@ export class MenuScreen {
     hintRow.appendChild(hintToggle);
     panel.appendChild(hintRow);
 
-    // Dev sky-state preview
-    const wrongnessRow = el('div', { marginBottom: '16px' });
-    const wLbl = el('div');
-    wLbl.className = 'drifter-label';
-    wLbl.textContent = 'SKY STATE (PREVIEW)';
-    wLbl.style.marginBottom = '8px';
-    wrongnessRow.appendChild(wLbl);
-
-    const grid = el('div', { display: 'flex', flexWrap: 'wrap', gap: '4px' });
-    for (const state of Object.values(WrongnessState)) {
-      const btn = el('button');
-      btn.className = 'drifter-btn';
-      Object.assign(btn.style, {
-        width: 'auto', padding: '4px 8px', fontSize: '0.6rem', letterSpacing: '0.08em',
-        opacity: this.wrongnessState === state ? '1' : '0.45',
-        borderColor: this.wrongnessState === state ? 'var(--accent-color)' : 'var(--border-color)',
-      });
-      btn.textContent = state.replace('_', ' ');
-      btn.onclick = () => {
-        this.wrongnessState = state;
-        this.callbacks.onWrongnessChange(state);
-        this.render();
-      };
-      grid.appendChild(btn);
-    }
-    wrongnessRow.appendChild(grid);
-    panel.appendChild(wrongnessRow);
-
     const backBtn = el('button');
     backBtn.className = 'drifter-btn secondary';
     backBtn.textContent = '← Back to relay';
@@ -597,12 +809,15 @@ export class MenuScreen {
     const drifterName = drifter?.name ?? 'DRIFTER';
     const signal = drifter ? Math.round(drifter.signalStrength) : 72;
 
-    const wrap = el('div', { position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,4,8,0.96)', zIndex: '10', pointerEvents: 'auto' });
+    // Lower-opacity gradient (was flat 0.96) so the live cinematic camera
+    // preview of the zone (AppShell.startRun's this.runtime.enterCinematic())
+    // reads through behind the card instead of being fully hidden by it.
+    const wrap = el('div', { position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(ellipse at center, rgba(2,4,8,0.55) 0%, rgba(2,4,8,0.88) 100%)', zIndex: '10', pointerEvents: 'auto' });
     const card = el('div', { maxWidth: '540px', width: '90%', padding: '32px 36px', background: 'rgba(6,12,22,0.95)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', gap: '20px' });
 
     const eyebrow = el('div', { fontFamily: "'Share Tech Mono', monospace", fontSize: '0.58rem', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(84,230,164,0.65)', marginBottom: '8px' });
     eyebrow.textContent = `WNCORE · ${mode === 'story' ? 'STRUCTURED RUN' : 'OPEN RUN'} · PRE-DEPLOYMENT BRIEF`;
-    const nameEl = el('div', { fontFamily: "'Rajdhani', system-ui, sans-serif", fontSize: '1.4rem', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(220,235,248,0.95)' });
+    const nameEl = el('div', { fontFamily: "'Rajdhani', system-ui, sans-serif", fontSize: '1.4rem', fontWeight: '500', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(220,235,248,0.95)' });
     nameEl.textContent = drifterName;
     const header = el('div');
     header.appendChild(eyebrow);
@@ -725,12 +940,11 @@ export class MenuScreen {
   ): HTMLElement {
     const surface = el('div', { position: 'absolute', inset: '0', zIndex: '2', pointerEvents: 'none' });
 
-    const canvasWrap = el('div', { position: 'absolute', inset: '0', zIndex: '0', pointerEvents: 'none', background: 'radial-gradient(circle at center, rgba(4,10,18,0.18) 0%, rgba(2,4,8,0.88) 70%, rgba(1,2,4,1) 100%)' });
+    const canvasWrap = el('div', { position: 'absolute', inset: '0', zIndex: '0', pointerEvents: 'none' });
     const canvas = runtime.canvas;
-    Object.assign(canvas.style, { width: '100%', height: '100%', display: 'block', objectFit: 'cover', pointerEvents: 'none', filter: 'contrast(1.04) saturate(1.05)' });
+    Object.assign(canvas.style, { width: '100%', height: '100%', display: 'block', pointerEvents: 'none', filter: 'contrast(1.04) saturate(1.05)' });
     canvasWrap.appendChild(canvas);
     surface.appendChild(canvasWrap);
-    runtime.handleResize();
 
     // HUD top bar
     const hud = el('div', { position: 'absolute', left: '24px', top: '24px', right: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', zIndex: '3', pointerEvents: 'none' });
@@ -749,7 +963,7 @@ export class MenuScreen {
         <img src="${portraitPath}" alt="" onerror="this.style.display='none'" style="width:56px;height:56px;object-fit:cover;object-position:top;image-rendering:pixelated;border:1px solid rgba(255,255,255,0.18);background:#0a0f16;flex-shrink:0;" />
         <div>
           <div style="font-family:'Share Tech Mono',monospace;font-size:0.64rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px;">RUN STATUS · ${engine?.drifter.name ?? 'DRIFTER'}</div>
-          <div style="font-family:'Rajdhani',system-ui,sans-serif;font-size:1rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-primary);margin-bottom:4px;">${zone?.name ?? 'RELAY ZONE'}</div>
+          <div style="font-family:'Rajdhani',system-ui,sans-serif;font-size:1rem;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-primary);margin-bottom:4px;">${zone?.name ?? 'RELAY ZONE'}</div>
           <div style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-secondary);">${engine ? Math.round(engine.drifter.signalStrength) : 0}% SIGNAL</div>
           ${hintsHtml}
         </div>

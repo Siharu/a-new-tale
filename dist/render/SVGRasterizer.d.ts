@@ -41,8 +41,6 @@ export interface BakeOptions {
 }
 export declare class SVGRasterizer {
     private cache;
-    private canvas;
-    private ctx;
     constructor();
     /**
      * Bake an SVG markup string into a THREE.CanvasTexture, synchronously.

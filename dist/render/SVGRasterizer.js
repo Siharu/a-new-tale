@@ -22,12 +22,6 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 export class SVGRasterizer {
     constructor() {
         this.cache = new Map();
-        this.canvas = document.createElement('canvas');
-        const ctx = this.canvas.getContext('2d');
-        if (!ctx) {
-            throw new Error('SVGRasterizer: failed to acquire 2D canvas context');
-        }
-        this.ctx = ctx;
     }
     /**
      * Bake an SVG markup string into a THREE.CanvasTexture, synchronously.
@@ -82,10 +76,23 @@ export class SVGRasterizer {
     // ─── internal ───
     rasterizeSync(svgMarkup, options) {
         const { width, height, background } = options;
-        this.canvas.width = width;
-        this.canvas.height = height;
-        const ctx = this.ctx;
-        ctx.clearRect(0, 0, width, height);
+        // Dedicated canvas per bake — NOT a shared scratch canvas cloned via
+        // cloneNode(). cloneNode() only copies DOM attributes (width/height),
+        // never the drawn bitmap: the clone comes back fully blank regardless
+        // of what was painted onto the source canvas beforehand. That bug used
+        // to hand THREE.CanvasTexture a permanently-empty/transparent image
+        // whenever the async <img> decode below didn't land (or hadn't landed
+        // yet), which is exactly why buildings baked through this path could
+        // render invisible. Drawing directly onto the same canvas instance the
+        // texture wraps guarantees the fallback (and later the real SVG) is
+        // actually visible on the GPU-uploaded content.
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('SVGRasterizer: failed to acquire 2D canvas context');
+        }
         if (background) {
             ctx.fillStyle = background;
             ctx.fillRect(0, 0, width, height);
@@ -97,54 +104,36 @@ export class SVGRasterizer {
         const fullSvg = svgMarkup.trimStart().startsWith('<svg')
             ? svgMarkup
             : `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${svgMarkup}</svg>`;
-        // Synchronous SVG -> canvas via data URL + drawImage. This *looks*
-        // async (Image.onload) but for data: URLs the decode is effectively
-        // immediate in practice across browsers/Codespaces' Chromium — we
-        // still wrap it correctly, but DRIFTER's bake sizes are small enough
-        // that blocking the caller until onload fires (via a tight synchronous
-        // wait) isn't viable. Instead we use the synchronous-safe path: draw
-        // via an Image that's already fully formed from a data URL, which
-        // modern browsers decode synchronously enough for canvas content of
-        // this size when accessed immediately after — verified against the
-        // actual Codespaces/Chromium environment this repo runs in.
-        //
-        // If this ever proves unreliable for larger bakes, the fallback is
-        // pre-loading via Image().decode() in an async bakeAsync() variant —
-        // left as a clean extension point, not needed for current scope.
-        const svgBlob = new Blob([fullSvg], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-        const img = new Image();
-        img.src = url;
-        // For same-tick synchronous use we rely on the canvas drawImage being
-        // called once the image is decoded. Since bakeImmediate must return a
-        // texture synchronously, we draw a deterministic procedural fallback
-        // immediately (so geometry never ends up textureless), then upgrade
-        // the texture's content in place once the real image decodes —
-        // Three.js picks this up automatically via texture.needsUpdate.
+        // Draw a deterministic procedural fallback immediately (so geometry
+        // never ends up textureless), then upgrade the texture's content in
+        // place once the real image decodes — Three.js picks this up
+        // automatically via texture.needsUpdate. The <img> decode is
+        // asynchronous even for blob: URLs in practice, so bakeImmediate must
+        // not depend on it having landed by the time it returns.
         this.drawFallback(ctx, width, height, background);
-        const texture = new THREE.CanvasTexture(this.canvas.cloneNode(true));
+        const texture = new THREE.CanvasTexture(canvas);
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.NearestFilter;
         texture.needsUpdate = true;
+        const svgBlob = new Blob([fullSvg], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        const img = new Image();
         img.onload = () => {
-            const liveCanvas = texture.image;
-            const liveCtx = liveCanvas.getContext('2d');
-            if (liveCtx) {
-                liveCtx.clearRect(0, 0, width, height);
-                if (background) {
-                    liveCtx.fillStyle = background;
-                    liveCtx.fillRect(0, 0, width, height);
-                }
-                liveCtx.drawImage(img, 0, 0, width, height);
-                texture.needsUpdate = true;
+            ctx.clearRect(0, 0, width, height);
+            if (background) {
+                ctx.fillStyle = background;
+                ctx.fillRect(0, 0, width, height);
             }
+            ctx.drawImage(img, 0, 0, width, height);
+            texture.needsUpdate = true;
             URL.revokeObjectURL(url);
         };
         img.onerror = () => {
             // Keep the fallback draw already on the texture; just clean up.
             URL.revokeObjectURL(url);
         };
+        img.src = url;
         return texture;
     }
     /**

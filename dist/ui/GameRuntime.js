@@ -1,6 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { HuskState } from '../gameplay/HuskSystem.js';
 import { IsometricRenderer } from '../render/IsometricRenderer.js';
+import { CinematicCamera } from '../render/CinematicCamera.js';
 import { SkySystem } from '../render/SkySystem.js';
 import { SpriteAnimator, vectorToDirection } from '../render/SpriteAnimator.js';
 import { BROADCAST_LINES, WHISPER_LINES } from '../data/broadcasts.js';
@@ -80,6 +81,11 @@ export class GameRuntime {
         this.onRunFail = null;
         /** Optional audio — pass from AppShell for expedition sounds. */
         this.audio = null;
+        /** When true, tick() skips input/movement/combat/HUD updates and only
+         *  drives the cinematic camera + sky/render — used for briefing flythroughs.
+         *  Defaults false so existing gameplay behavior is unaffected unless
+         *  enterCinematic() is explicitly called. */
+        this.cinematicMode = false;
         this.heldKeys = new Set();
         // ── Mobile / touch ──────────────────────────────────────────────────────────
         /** Virtual joystick container element. */
@@ -141,49 +147,54 @@ export class GameRuntime {
                 this.animationFrame = window.requestAnimationFrame(this.tick);
                 return;
             }
-            const input = this.getInputVector();
-            this.engine.update(deltaSeconds, input, []);
-            // Footstep sounds while moving
-            const isMoving = Math.abs(input.x) + Math.abs(input.y) > 0.01;
-            if (isMoving) {
-                this.footstepTimer += deltaSeconds;
-                if (this.footstepTimer >= FOOTSTEP_INTERVAL) {
-                    this.footstepTimer = 0;
-                    this.audio?.playFootstep();
-                }
+            if (this.cinematicMode) {
+                this.cinematicCameraController.update(deltaSeconds);
             }
             else {
-                this.footstepTimer = 0;
-            }
-            // Update Drifter position and animation
-            const drifterPosition = this.engine.drifter.position;
-            if (this.drifterMesh && drifterPosition) {
-                const { x, z } = worldToScene(drifterPosition, this.maxDimension);
-                this.drifterMesh.position.set(x, this.drifterMesh.userData.yOffset ?? 0.45, z);
-                if (this.drifterAnimator) {
-                    const direction = vectorToDirection(input.x, input.y);
-                    this.drifterAnimator.update(deltaSeconds, direction);
+                const input = this.getInputVector();
+                this.engine.update(deltaSeconds, input, []);
+                // Footstep sounds while moving
+                const isMoving = Math.abs(input.x) + Math.abs(input.y) > 0.01;
+                if (isMoving) {
+                    this.footstepTimer += deltaSeconds;
+                    if (this.footstepTimer >= FOOTSTEP_INTERVAL) {
+                        this.footstepTimer = 0;
+                        this.audio?.playFootstep();
+                    }
                 }
+                else {
+                    this.footstepTimer = 0;
+                }
+                // Update Drifter position and animation
+                const drifterPosition = this.engine.drifter.position;
+                if (this.drifterMesh && drifterPosition) {
+                    const { x, z } = worldToScene(drifterPosition, this.maxDimension);
+                    this.drifterMesh.position.set(x, this.drifterMesh.userData.yOffset ?? 0.45, z);
+                    if (this.drifterAnimator) {
+                        const direction = vectorToDirection(input.x, input.y);
+                        this.drifterAnimator.update(deltaSeconds, direction);
+                    }
+                }
+                // Extraction proximity + marker pulse
+                if (drifterPosition) {
+                    const dx = drifterPosition.x - this.extractionPoint.x;
+                    const dy = drifterPosition.y - this.extractionPoint.y;
+                    const threshold = Math.max(1.5, this.maxDimension * 0.08);
+                    this.extractionNearby = Math.sqrt(dx * dx + dy * dy) <= threshold;
+                }
+                if (this.extractionMarker) {
+                    const m = this.extractionMarker.material;
+                    m.emissiveIntensity = this.extractionNearby
+                        ? 1.1 + Math.sin(this.elapsed * 6) * 0.3
+                        : 0.55 + Math.sin(this.elapsed * 2.4) * 0.2;
+                }
+                this.updateHuskMeshes(deltaSeconds);
+                this.updateCombatAndItems(deltaSeconds);
+                this.updateBroadcast(deltaSeconds);
+                this.drawMinimap();
+                if (this.worldMapVisible)
+                    this.drawWorldMap();
             }
-            // Extraction proximity + marker pulse
-            if (drifterPosition) {
-                const dx = drifterPosition.x - this.extractionPoint.x;
-                const dy = drifterPosition.y - this.extractionPoint.y;
-                const threshold = Math.max(1.5, this.maxDimension * 0.08);
-                this.extractionNearby = Math.sqrt(dx * dx + dy * dy) <= threshold;
-            }
-            if (this.extractionMarker) {
-                const m = this.extractionMarker.material;
-                m.emissiveIntensity = this.extractionNearby
-                    ? 1.1 + Math.sin(this.elapsed * 6) * 0.3
-                    : 0.55 + Math.sin(this.elapsed * 2.4) * 0.2;
-            }
-            this.updateHuskMeshes(deltaSeconds);
-            this.updateCombatAndItems(deltaSeconds);
-            this.updateBroadcast(deltaSeconds);
-            this.drawMinimap();
-            if (this.worldMapVisible)
-                this.drawWorldMap();
             this.sky.update(deltaSeconds, {
                 timeOfDay: this.zone.timeOfDay,
                 weatherState: this.zone.weatherState,
@@ -335,6 +346,7 @@ export class GameRuntime {
             textureHeight: 512,
             zoneSeed: this.zone.seed,
         });
+        this.cinematicCameraController = new CinematicCamera(this.renderer.cinematicCamera);
     }
     async start() {
         this.sky.init();
@@ -386,6 +398,13 @@ export class GameRuntime {
         };
         window.addEventListener('touchstart', onFirstTouch, { passive: true });
         this.lastTimestamp = performance.now();
+        // Fire a second handleResize one frame after start() so if clientWidth
+        // was still 0 at AppShell's pre-start call, we correct it on first tick.
+        requestAnimationFrame(() => {
+            if (this.canvas.clientWidth > 0) {
+                this.renderer.handleResize();
+            }
+        });
         this.animationFrame = window.requestAnimationFrame(this.tick);
     }
     stop() {
@@ -420,10 +439,19 @@ export class GameRuntime {
         if (this.zoneObjects.has(zone.id))
             return;
         const built = [];
+        // Buildings are built at raw world-grid scale (building.size is in the
+        // same units as zone.size, e.g. up to ~2048) but only ever *positioned*
+        // in the compressed ±SCENE_HALF_EXTENT scene space via worldToScene().
+        // Without this scale, every building is a many-hundred-unit slab sitting
+        // at a tiny coordinate — the camera ends up inside/behind giant geometry,
+        // which is the actual cause of the screen reading as black/overfilled
+        // regardless of weather. Same normalization factor worldToScene() uses.
+        const worldToSceneScale = (SCENE_HALF_EXTENT * 2) / this.maxDimension;
         for (const building of zone.buildings ?? []) {
             const diorama = this.engine.buildingFactory.build(building, zone.id);
             const { x, z } = worldToScene(building.position, this.maxDimension);
             diorama.group.position.set(x, 0, z);
+            diorama.group.scale.setScalar(worldToSceneScale);
             diorama.group.userData.zoneId = zone.id;
             this.renderer.scene.add(diorama.group);
             built.push(diorama.group);
@@ -913,6 +941,43 @@ export class GameRuntime {
         }
         this.worldMapVisible = false;
         this.worldMapCanvas.style.display = 'none';
+    }
+    /**
+     * Switch to a free-flying perspective view of the already-built scene and
+     * suspend gameplay updates (movement, combat, HUD). Intended for the
+     * briefing screen's "drop preview" — the zone is already generated/loaded
+     * by this point (start() must have run first), so this just changes what's
+     * drawn, not what exists. Defaults to a slow orbit if no keyframes given.
+     */
+    enterCinematic(orbitOptions) {
+        this.cinematicMode = true;
+        this.renderer.useCinematicCamera();
+        this.cinematicCameraController.orbit({
+            radius: this.maxDimension > 0 ? Math.min(18, this.maxDimension * 0.02) : 12,
+            height: 7,
+            speedRadPerSec: 0.06,
+            ...orbitOptions,
+        });
+    }
+    /** Play a one-shot scripted flythrough instead of the default orbit —
+     *  e.g. a scripted "drop-in" pan across the zone before the briefing
+     *  Confirm button appears. Falls back to orbit() behavior once finished
+     *  unless exitCinematic()/a new call supersedes it. */
+    playCinematicPath(keyframes, onComplete) {
+        this.cinematicMode = true;
+        this.renderer.useCinematicCamera();
+        this.cinematicCameraController.flyPath(keyframes, onComplete);
+    }
+    /** Return to the fixed iso gameplay camera and resume normal ticking
+     *  (input, movement, combat, HUD). Call when the player confirms
+     *  deployment from the briefing screen. */
+    exitCinematic() {
+        this.cinematicMode = false;
+        this.cinematicCameraController.stop();
+        this.renderer.useIsoCamera();
+    }
+    isCinematicActive() {
+        return this.cinematicMode;
     }
     // ── Mobile controls ─────────────────────────────────────────────────────────
     buildMobileControls() {

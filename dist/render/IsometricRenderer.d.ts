@@ -44,6 +44,10 @@ export interface IsometricRendererOptions {
 export declare class IsometricRenderer {
     readonly scene: THREE.Scene;
     readonly camera: THREE.OrthographicCamera;
+    /** Free perspective camera for non-gameplay views (menu backdrop, briefing
+     *  flythroughs). Shares this.scene — nothing about gameplay, worldgen, or
+     *  the iso camera changes because this exists. Driven by CinematicCamera. */
+    readonly cinematicCamera: THREE.PerspectiveCamera;
     readonly renderer: THREE.WebGLRenderer;
     readonly pixelPipeline: PixelPipeline;
     readonly lightingController: LightingController;
@@ -60,6 +64,10 @@ export declare class IsometricRenderer {
     private attachedSky;
     private godRaysEnabled;
     private dustEnabled;
+    /** Which camera render() draws with. Gameplay (MovementController etc.)
+     *  never touches this — only whatever calls useCinematicCamera()/useIsoCamera(),
+     *  e.g. AppShell switching on menu/briefing vs play. */
+    private activeCamera;
     private decayLevel;
     constructor(options: IsometricRendererOptions);
     private buildIsoCamera;
@@ -93,6 +101,14 @@ export declare class IsometricRenderer {
      * attachSky() hasn't been called), so this is always safe to call.
      */
     render(): void;
+    /** Switch the drawn camera to the free-flying cinematic one (menu backdrop,
+     *  briefing flythroughs). Gameplay keeps updating drifter/husk positions in
+     *  world space as normal underneath — only what's drawn changes. */
+    useCinematicCamera(): void;
+    /** Switch back to the fixed-pitch gameplay iso camera. */
+    useIsoCamera(): void;
+    /** True if the cinematic camera is currently the one being drawn with. */
+    isCinematicActive(): boolean;
     /** Toggle god rays at runtime (e.g. quality settings, or auto-disable during HUSK_NEST combat for clarity). */
     setGodRaysEnabled(enabled: boolean): void;
     /** Toggle dust motes at runtime (e.g. disable indoors via Zone/Room type, or during Obsedia Rain where falling streaks replace ambient dust). */
